@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReassignTaskModal from '../../components/common/ReassignTaskModal';
 import { 
   Building2, 
   Clock, 
@@ -13,6 +14,7 @@ import {
 
 const BottleneckDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-hidden">
@@ -281,7 +283,10 @@ const BottleneckDashboard: React.FC = () => {
                           <span className="text-sm text-slate-600">Assignee Overloaded</span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">
+                          <button 
+                            onClick={() => setIsReassignModalOpen(true)}
+                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                          >
                             Reassign
                           </button>
                         </td>
@@ -307,7 +312,10 @@ const BottleneckDashboard: React.FC = () => {
                           <span className="text-sm text-slate-600">Equipment Delay</span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">
+                          <button 
+                            onClick={() => setIsReassignModalOpen(true)}
+                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                          >
                             Reassign
                           </button>
                         </td>
@@ -333,7 +341,10 @@ const BottleneckDashboard: React.FC = () => {
                           <span className="text-sm text-slate-600">Sudden Absence</span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">
+                          <button 
+                            onClick={() => setIsReassignModalOpen(true)}
+                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                          >
                             Reassign
                           </button>
                         </td>
@@ -359,7 +370,10 @@ const BottleneckDashboard: React.FC = () => {
                           <span className="text-sm text-slate-600">Awaiting External Data</span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">
+                          <button 
+                            onClick={() => setIsReassignModalOpen(true)}
+                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                          >
                             Reassign
                           </button>
                         </td>
@@ -535,6 +549,7 @@ const BottleneckDashboard: React.FC = () => {
         </div>
 
       </div>
+      <ReassignTaskModal isOpen={isReassignModalOpen} onClose={() => setIsReassignModalOpen(false)} />
     </div>
   );
 };
