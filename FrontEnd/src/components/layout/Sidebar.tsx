@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole = 'manager', currentP
             <User size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{userRole === 'manager' ? 'Dr. Sarah Smith' : 'Nurse Kim'}</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{userRole === 'manager' ? 'Dr. Khoa' : 'Nurse Kim'}</p>
             <p className="text-xs text-slate-500 truncate">{userRole === 'manager' ? 'Operations Manager' : 'Staff Nurse'}</p>
           </div>
         </div>
