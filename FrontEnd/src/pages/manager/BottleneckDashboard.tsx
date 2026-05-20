@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReassignTaskModal from '../../components/common/ReassignTaskModal';
+import { getBottleneckWorkload, getBottleneckDetect } from '../../services/managerService';
 import { 
   Building2, 
   Clock, 
@@ -15,6 +16,24 @@ import {
 const BottleneckDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Overview');
   const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
+  const [workloadData, setWorkloadData] = useState<any>(null);
+  const [detectData, setDetectData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [workload, detect] = await Promise.all([
+          getBottleneckWorkload(),
+          getBottleneckDetect()
+        ]);
+        setWorkloadData(workload);
+        setDetectData(detect);
+      } catch (err) {
+        console.error('Failed to fetch bottleneck data', err);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-hidden">
@@ -263,121 +282,42 @@ const BottleneckDashboard: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-slate-900 whitespace-nowrap">T-882</span>
-                            <span className="text-sm text-slate-600 whitespace-nowrap">Emergency Room Setup</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded">ER</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-900 whitespace-nowrap">Dr. Khoa</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-semibold text-rose-600 leading-tight block">Overdue by<br/>4h</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-600">Assignee Overloaded</span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => setIsReassignModalOpen(true)}
-                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
-                          >
-                            Reassign
-                          </button>
-                        </td>
-                      </tr>
-
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-slate-900 whitespace-nowrap">T-885</span>
-                            <span className="text-sm text-slate-600 whitespace-nowrap">Ventilator Maintenance Check</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded">ICU</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-900 whitespace-nowrap">Nurse Trang</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-semibold text-rose-600 leading-tight block">Overdue by<br/>2.5h</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-600">Equipment Delay</span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => setIsReassignModalOpen(true)}
-                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
-                          >
-                            Reassign
-                          </button>
-                        </td>
-                      </tr>
-
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-slate-900 whitespace-nowrap">T-890</span>
-                            <span className="text-sm text-slate-600 whitespace-nowrap">Pre-Op Patient Transfer</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 text-xs font-semibold rounded">Surgery</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-900 whitespace-nowrap">Dr. Hao</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-semibold text-rose-600 leading-tight block">Overdue by<br/>1.5h</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-600">Sudden Absence</span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => setIsReassignModalOpen(true)}
-                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
-                          >
-                            Reassign
-                          </button>
-                        </td>
-                      </tr>
-
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-slate-900 whitespace-nowrap">T-892</span>
-                            <span className="text-sm text-slate-600 whitespace-nowrap">Lab Results Verification</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded">ER</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-900 whitespace-nowrap">Dr. Chen</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-semibold text-rose-600 leading-tight block">Overdue by<br/>1h</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-slate-600">Awaiting External Data</span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => setIsReassignModalOpen(true)}
-                            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
-                          >
-                            Reassign
-                          </button>
-                        </td>
-                      </tr>
+                      {!detectData ? (
+                        <tr><td colSpan={6} className="px-6 py-4 text-center text-sm text-slate-500">Loading delayed tasks...</td></tr>
+                      ) : detectData.overdueTasks.length === 0 ? (
+                        <tr><td colSpan={6} className="px-6 py-4 text-center text-sm text-slate-500">No delayed tasks found.</td></tr>
+                      ) : (
+                        detectData.overdueTasks.map((task: any) => (
+                          <tr key={task.WorkItemID} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-semibold text-slate-900 whitespace-nowrap">T-{task.WorkItemID}</span>
+                                <span className="text-sm text-slate-600 whitespace-nowrap truncate max-w-[200px]">{task.Title}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded">{task.WorkType || 'General'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-slate-900 whitespace-nowrap">Unknown</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-semibold text-rose-600 leading-tight block">Overdue</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-slate-600">Past Due Date</span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button 
+                                onClick={() => setIsReassignModalOpen(true)}
+                                className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
+                              >
+                                Reassign
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
 
                     </tbody>
                   </table>
@@ -400,148 +340,53 @@ const BottleneckDashboard: React.FC = () => {
 
               {/* Staff Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                
-                {/* Card 1 */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 font-bold text-lg shrink-0">
-                        DK
+                {!workloadData ? (
+                  <div className="text-slate-500 col-span-full">Loading workload data...</div>
+                ) : (
+                  workloadData.map((staff: any) => {
+                    const maxTasks = 10;
+                    const capacity = Math.round((staff.ActiveTasks / maxTasks) * 100);
+                    const isOverloaded = capacity >= 100;
+                    const colorPrefix = isOverloaded ? 'rose' : capacity > 70 ? 'amber' : 'sky';
+
+                    return (
+                      <div key={staff.EmployeeID} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-full bg-${colorPrefix}-100 flex items-center justify-center text-${colorPrefix}-700 font-bold text-lg shrink-0`}>
+                              {staff.Name.substring(0,2).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-slate-900 truncate max-w-[120px]">{staff.Name}</span>
+                              <span className="text-xs text-slate-500 font-medium truncate max-w-[120px]">{staff.Department || 'General'}</span>
+                            </div>
+                          </div>
+                          {isOverloaded && <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold uppercase rounded">Urgent</span>}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-xs font-semibold">
+                            <span className="text-slate-600">Capacity</span>
+                            <span className={`text-${colorPrefix}-600`}>{capacity}% - {isOverloaded ? 'Overloaded' : capacity > 70 ? 'Busy' : 'Optimal'}</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className={`h-full bg-${colorPrefix}-600 rounded-full`} style={{ width: `${Math.min(capacity, 100)}%` }}></div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-end mt-2 pt-4 border-t border-slate-100">
+                          <div className="flex flex-col">
+                            <span className="text-lg font-bold text-slate-900 leading-none">{staff.ActiveTasks}</span>
+                            <span className="text-xs text-slate-500 font-medium mt-1">Active Tasks</span>
+                          </div>
+                          <button className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-sky-600 text-xs font-bold rounded-lg shadow-sm transition-colors">
+                            View Tasks
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">Dr. Khoa</span>
-                        <span className="text-xs text-slate-500 font-medium">Cardiology</span>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold uppercase rounded">Urgent</span>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-slate-600">Capacity</span>
-                      <span className="text-rose-600">110% - Overloaded</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-rose-600 rounded-full w-full"></div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-end mt-2 pt-4 border-t border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-lg font-bold text-slate-900 leading-none">15</span>
-                      <span className="text-xs text-slate-500 font-medium mt-1">Active Tasks</span>
-                    </div>
-                    <button className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-sky-600 text-xs font-bold rounded-lg shadow-sm transition-colors">
-                      View Tasks
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card 2 */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg shrink-0">
-                        NT
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">Nurse Trang</span>
-                        <span className="text-xs text-slate-500 font-medium">ICU</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-slate-600">Capacity</span>
-                      <span className="text-sky-600">75% - Optimal</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-sky-600 rounded-full w-[75%]"></div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-end mt-2 pt-4 border-t border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-lg font-bold text-slate-900 leading-none">8</span>
-                      <span className="text-xs text-slate-500 font-medium mt-1">Active Tasks</span>
-                    </div>
-                    <button className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-sky-600 text-xs font-bold rounded-lg shadow-sm transition-colors">
-                      View Tasks
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card 3 */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg shrink-0">
-                        DC
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">Dr. Ching</span>
-                        <span className="text-xs text-slate-500 font-medium">Emergency</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-slate-600">Capacity</span>
-                      <span className="text-sky-600">20% - Available</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-sky-600 rounded-full w-[20%]"></div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-end mt-2 pt-4 border-t border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-lg font-bold text-slate-900 leading-none">2</span>
-                      <span className="text-xs text-slate-500 font-medium mt-1">Active Tasks</span>
-                    </div>
-                    <button className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-sky-600 text-xs font-bold rounded-lg shadow-sm transition-colors">
-                      View Tasks
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card 4 */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg shrink-0">
-                        DC
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">Dr. Chong</span>
-                        <span className="text-xs text-slate-500 font-medium">Pediatrics</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-slate-600">Capacity</span>
-                      <span className="text-sky-600">60% - Optimal</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-sky-600 rounded-full w-[60%]"></div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-end mt-2 pt-4 border-t border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-lg font-bold text-slate-900 leading-none">6</span>
-                      <span className="text-xs text-slate-500 font-medium mt-1">Active Tasks</span>
-                    </div>
-                    <button className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-sky-600 text-xs font-bold rounded-lg shadow-sm transition-colors">
-                      View Tasks
-                    </button>
-                  </div>
-                </div>
-
+                    );
+                  })
+                )}
               </div>
             </div>
           )}

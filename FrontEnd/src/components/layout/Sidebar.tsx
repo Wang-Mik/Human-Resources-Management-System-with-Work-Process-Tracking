@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Briefcase,
   ClipboardCheck,
-  AlertOctagon,
   Users,
   Settings,
   User,
   PieChart
 } from 'lucide-react';
+import api from '../../services/api';
 
 interface SidebarProps {
   userRole?: 'manager' | 'employee';
@@ -17,6 +17,27 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ userRole = 'manager', currentPage = 'Dashboard', onNavigate }) => {
+  const [userName, setUserName] = useState('');
+  const [userTitle, setUserTitle] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const empData = await api.get('/employees');
+        // Simple mock auth resolution based on role
+        const targetEmail = userRole === 'manager' ? 'khoa@hospital.com' : 'minh@hospital.com';
+        const user = empData.find((e: any) => e.Email === targetEmail);
+        
+        if (user) {
+          setUserName(user.Name);
+          setUserTitle(user.Position || user.Role);
+        }
+      } catch (err) {
+        console.error('Error fetching user for sidebar', err);
+      }
+    };
+    fetchUser();
+  }, [userRole]);
   return (
     <aside className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col h-full shrink-0 hidden md:flex">
       <div className="px-6 py-8 mb-2">
@@ -108,8 +129,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole = 'manager', currentP
             <User size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{userRole === 'manager' ? 'Dr. Khoa' : 'Nurse Kim'}</p>
-            <p className="text-xs text-slate-500 truncate">{userRole === 'manager' ? 'Operations Manager' : 'Staff Nurse'}</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{userName || (userRole === 'manager' ? 'Loading...' : 'Loading...')}</p>
+            <p className="text-xs text-slate-500 truncate">{userTitle}</p>
           </div>
         </div>
       </div>

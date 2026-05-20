@@ -1,9 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, SlidersHorizontal } from 'lucide-react';
 import InitiateHandoverModal from '../../components/common/InitiateHandoverModal';
+import api from '../../services/api';
+
+interface HandoverRecord {
+  HandOverID: number;
+  FromName: string;
+  ToName: string;
+  Reason: string;
+  Status: string;
+  CreatedAt: string;
+}
 
 const MyHandovers: React.FC = () => {
   const [isHandoverModalOpen, setIsHandoverModalOpen] = useState(false);
+  const [handovers, setHandovers] = useState<HandoverRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchHandovers = async () => {
+    try {
+      const data = await api.get('/handovers');
+      setHandovers(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHandovers();
+  }, []);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
@@ -48,106 +75,46 @@ const MyHandovers: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-300/20">
-                
-                {/* Row 1 */}
-                <tr className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="text-sky-700 text-sm font-medium font-['Inter'] cursor-pointer hover:underline">#HO-4092</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">PM Shift</span>
-                      <span className="text-slate-500 text-xs">(19:00-07:00)</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img className="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Nurse+Kim&background=E0F2FE&color=0369A1" alt="Nurse Kim" />
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">Nurse. Kim</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-slate-600 text-sm font-normal font-['Inter']">Oct 24, 18:45</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-medium font-['Inter'] rounded-xl outline outline-1 outline-amber-200 inline-block text-center whitespace-nowrap">Pending Review</span>
-                  </td>
-                </tr>
-
-                {/* Row 2 */}
-                <tr className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="text-sky-700 text-sm font-medium font-['Inter'] cursor-pointer hover:underline">#HO-4091</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">PM Shift</span>
-                      <span className="text-slate-500 text-xs">(19:00-07:00)</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img className="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Dr+Quang+Minh&background=E0F2FE&color=0369A1" alt="Dr. Quang Minh" />
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">Dr. Quang Minh</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-slate-600 text-sm font-normal font-['Inter']">Oct 23, 18:45</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-medium font-['Inter'] rounded-xl outline outline-1 outline-green-200 inline-block text-center whitespace-nowrap">Approved</span>
-                  </td>
-                </tr>
-
-                {/* Row 3 */}
-                <tr className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="text-sky-700 text-sm font-medium font-['Inter'] cursor-pointer hover:underline">#HO-4090</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">PM Shift</span>
-                      <span className="text-slate-500 text-xs">(19:00-07:00)</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img className="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Dr+Quang+Minh&background=E0F2FE&color=0369A1" alt="Dr. Quang Minh" />
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">Dr. Quang Minh</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-slate-600 text-sm font-normal font-['Inter']">Oct 22, 18:45</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-medium font-['Inter'] rounded-xl outline outline-1 outline-green-200 inline-block text-center whitespace-nowrap">Approved</span>
-                  </td>
-                </tr>
-                
-                {/* Row 4 */}
-                <tr className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="text-sky-700 text-sm font-medium font-['Inter'] cursor-pointer hover:underline">#HO-4089</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">AM Shift</span>
-                      <span className="text-slate-500 text-xs">(07:00-19:00)</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img className="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Nurse+Sarah&background=E0F2FE&color=0369A1" alt="Nurse Sarah" />
-                      <span className="text-zinc-900 text-sm font-normal font-['Inter']">Nurse. Sarah</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-slate-600 text-sm font-normal font-['Inter']">Oct 21, 06:45</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-medium font-['Inter'] rounded-xl outline outline-1 outline-green-200 inline-block text-center whitespace-nowrap">Approved</span>
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">Loading handovers...</td>
+                  </tr>
+                ) : handovers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">No handovers found.</td>
+                  </tr>
+                ) : (
+                  handovers.map(ho => (
+                    <tr key={ho.HandOverID} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <span className="text-sky-700 text-sm font-medium font-['Inter'] cursor-pointer hover:underline">#HO-{ho.HandOverID}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-zinc-900 text-sm font-normal font-['Inter'] truncate max-w-[150px]">{ho.Reason}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold text-xs shrink-0">{ho.ToName.charAt(0)}</div>
+                          <span className="text-zinc-900 text-sm font-normal font-['Inter']">{ho.ToName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-slate-600 text-sm font-normal font-['Inter']">{new Date(ho.CreatedAt).toLocaleString()}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 text-xs font-medium font-['Inter'] rounded-xl outline outline-1 inline-block text-center whitespace-nowrap ${
+                          ho.Status === 'Pending' || ho.Status === 'Initiated' ? 'bg-amber-100 text-amber-800 outline-amber-200' :
+                          ho.Status === 'Approved' ? 'bg-green-100 text-green-800 outline-green-200' :
+                          'bg-slate-100 text-slate-800 outline-slate-200'
+                        }`}>
+                          {ho.Status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
 
               </tbody>
             </table>
@@ -171,6 +138,7 @@ const MyHandovers: React.FC = () => {
       <InitiateHandoverModal 
         isOpen={isHandoverModalOpen} 
         onClose={() => setIsHandoverModalOpen(false)} 
+        onSuccess={() => fetchHandovers()}
       />
     </div>
   );

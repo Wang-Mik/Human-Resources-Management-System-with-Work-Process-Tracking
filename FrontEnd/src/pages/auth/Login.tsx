@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
 import { Mail, Lock, LogIn, LifeBuoy } from 'lucide-react';
+import api from '../../services/api';
 
 interface LoginProps {
-  onLogin: (role: 'manager' | 'employee') => void;
+  onLogin: (role: 'manager' | 'employee', user: any) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('doctor@hcmut.edu.vn');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('khoa@hospital.com');
+  const [password, setPassword] = useState('password123');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const role = email.toLowerCase().includes('manager') ? 'manager' : 'employee';
-    onLogin(role);
+    setError('');
+    try {
+      const data = await api.post('/auth/login', { email, password });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      const role = data.user.Role.toLowerCase().includes('manager') ? 'manager' : 'employee';
+      onLogin(role, data.user);
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    }
   };
 
   return (
@@ -64,6 +74,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               />
             </div>
           </div>
+
+          {error && <div className="text-rose-600 text-sm font-semibold">{error}</div>}
 
           <button 
             type="submit"

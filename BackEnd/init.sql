@@ -1,6 +1,6 @@
-CREATE DATABASE HMSDB;
+CREATE DATABASE hrm_db;
 GO
-USE HMSDB;
+USE hrm_db;
 GO
 
 -- Employee (Cập nhật thêm các trường cơ bản và thay đổi Department/Position thành chuỗi)

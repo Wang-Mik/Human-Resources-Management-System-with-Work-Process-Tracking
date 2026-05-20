@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   ClipboardList, 
@@ -16,17 +16,52 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-
-const workloadData = [
-  { name: 'ER', tasks: 42 },
-  { name: 'ICU', tasks: 28 },
-  { name: 'Ward A', tasks: 35 },
-  { name: 'Ward B', tasks: 18 },
-  { name: 'OR', tasks: 12 },
-  { name: 'Lab', tasks: 7 },
-];
+import api from '../../services/api';
+import { getBottleneckWorkload, getBottleneckDetect } from '../../services/managerService';
 
 const Dashboard: React.FC = () => {
+  const [data, setData] = useState<any>({
+    employees: [],
+    works: [],
+    handovers: [],
+    bottlenecks: null,
+    workload: [],
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [emp, works, handovers, bottlenecks, workload] = await Promise.all([
+          api.get('/employees'),
+          api.get('/works'),
+          api.get('/handovers'),
+          getBottleneckDetect(),
+          getBottleneckWorkload()
+        ]);
+        setData({ employees: emp, works, handovers, bottlenecks, workload });
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const totalStaff = data.employees.length;
+  const pendingTasks = data.works.filter((w: any) => w.Status === 'Pending' || w.Status === 'Unassigned' || !w.Status).length;
+  const pendingHandovers = data.handovers.filter((h: any) => h.Status === 'Pending').length;
+  const criticalBottlenecks = data.bottlenecks?.overloadedStaff?.length || 0;
+
+  const workloadChartData = data.workload.reduce((acc: any, curr: any) => {
+    const dept = curr.Department || 'General';
+    const existing = acc.find((item: any) => item.name === dept);
+    if (existing) {
+      existing.tasks += curr.ActiveTasks;
+    } else {
+      acc.push({ name: dept, tasks: curr.ActiveTasks });
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10">
       <div className="max-w-[1280px] mx-auto flex flex-col gap-6">
@@ -41,7 +76,7 @@ const Dashboard: React.FC = () => {
                 <Users size={20} />
               </div>
             </div>
-            <div className="text-4xl font-bold text-slate-800">142</div>
+            <div className="text-4xl font-bold text-slate-800">{totalStaff}</div>
           </div>
 
           {/* Card 2 */}
@@ -52,7 +87,7 @@ const Dashboard: React.FC = () => {
                 <ClipboardList size={20} />
               </div>
             </div>
-            <div className="text-4xl font-bold text-slate-800">28</div>
+            <div className="text-4xl font-bold text-slate-800">{pendingTasks}</div>
           </div>
 
           {/* Card 3 */}
@@ -63,7 +98,7 @@ const Dashboard: React.FC = () => {
                 <FileWarning size={20} />
               </div>
             </div>
-            <div className="text-4xl font-bold text-slate-800">12</div>
+            <div className="text-4xl font-bold text-slate-800">{pendingHandovers}</div>
           </div>
 
           {/* Card 4 */}
@@ -74,7 +109,7 @@ const Dashboard: React.FC = () => {
                 <AlertTriangle size={20} />
               </div>
             </div>
-            <div className="text-4xl font-bold text-rose-700">3</div>
+            <div className="text-4xl font-bold text-rose-700">{criticalBottlenecks}</div>
           </div>
         </div>
 
@@ -99,7 +134,7 @@ const Dashboard: React.FC = () => {
 
             <div className="flex-1 min-h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={workloadData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={workloadChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
@@ -123,50 +158,26 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-3">
-              {/* Item 1 */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">DA</div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Dr. Aris</p>
-                    <p className="text-xs text-slate-500">Cardiology</p>
+              {data.workload.slice(0, 3).map((staff: any) => {
+                const isBusy = staff.ActiveTasks >= 5;
+                return (
+                  <div key={staff.EmployeeID} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
+                        {staff.Name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{staff.Name}</p>
+                        <p className="text-xs text-slate-500">{staff.Department || 'General'}</p>
+                      </div>
+                    </div>
+                    <div className={`px-2.5 py-1 ${isBusy ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'} rounded-full flex items-center gap-1.5 border`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${isBusy ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                      <span className={`text-xs font-semibold ${isBusy ? 'text-amber-700' : 'text-green-700'}`}>{isBusy ? 'Busy' : 'Available'}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="px-2.5 py-1 bg-green-50 border border-green-200 rounded-full flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                  <span className="text-xs font-semibold text-green-700">Available</span>
-                </div>
-              </div>
-
-              {/* Item 2 */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">NM</div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Nurse Mira</p>
-                    <p className="text-xs text-slate-500">ICU</p>
-                  </div>
-                </div>
-                <div className="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-full flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-                  <span className="text-xs font-semibold text-amber-700">Busy</span>
-                </div>
-              </div>
-
-              {/* Item 3 */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">TS</div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Tech Sam</p>
-                    <p className="text-xs text-slate-500">Radiology</p>
-                  </div>
-                </div>
-                <div className="px-2.5 py-1 bg-red-50 border border-red-200 rounded-full flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                  <span className="text-xs font-semibold text-red-700">Absent</span>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 

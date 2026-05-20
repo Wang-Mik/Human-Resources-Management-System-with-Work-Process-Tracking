@@ -1,9 +1,48 @@
-import React, { useState } from 'react';
-import { Clock, CheckCircle2, AlertCircle, Hourglass, ArrowRightLeft, MapPin, BedDouble } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, CheckCircle2, AlertCircle, Hourglass, ArrowRightLeft, MapPin } from 'lucide-react';
 import InitiateHandoverModal from '../../components/common/InitiateHandoverModal';
+import api from '../../services/api';
+
+interface Employee {
+  EmployeeID: number;
+  Name: string;
+  Email: string;
+  Role: string;
+}
+
+interface WorkItem {
+  WorkItemID: number;
+  Title: string;
+  Description: string;
+  WorkType: string;
+  Status: string;
+  DueDate: string;
+}
 
 const Workspace: React.FC = () => {
   const [isHandoverModalOpen, setIsHandoverModalOpen] = useState(false);
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [tasks, setTasks] = useState<WorkItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setEmployee(user);
+        }
+        const worksData = await api.get('/works');
+        setTasks(worksData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gradient-to-br from-slate-50 to-blue-50/30">
@@ -11,7 +50,7 @@ const Workspace: React.FC = () => {
         
         {/* Header Section */}
         <div className="flex flex-col gap-1 mb-2 animate-fade-in">
-          <h1 className="text-zinc-900 text-3xl font-bold font-['Inter'] tracking-tight">Good Morning, Nurse Kim</h1>
+          <h1 className="text-zinc-900 text-3xl font-bold font-['Inter'] tracking-tight">Good Morning, {employee ? employee.Name : 'Loading...'}</h1>
           <p className="text-slate-600 text-base font-normal font-['Inter']">Here's what's happening on your shift today.</p>
         </div>
 
@@ -85,83 +124,44 @@ const Workspace: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full">
-              {/* Task Card 1 */}
-              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                <div className="flex justify-between items-center">
-                  <div className="px-3 py-1.5 bg-blue-50 text-sky-700 rounded-full flex items-center gap-1.5">
-                    <CheckCircle2 size={14} className="text-sky-600" />
-                    <span className="text-xs font-bold font-['Inter']">In Progress</span>
+              {loading ? (
+                <p>Loading tasks...</p>
+              ) : tasks.length === 0 ? (
+                <p>No tasks assigned.</p>
+              ) : (
+                tasks.map(task => (
+                  <div key={task.WorkItemID} className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                    <div className="flex justify-between items-center">
+                      <div className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 ${task.Status === 'In Progress' ? 'bg-blue-50 text-sky-700' : 'bg-slate-100 text-slate-700'}`}>
+                        {task.Status === 'In Progress' ? <CheckCircle2 size={14} className="text-sky-600" /> : <Hourglass size={14} className="text-slate-600" />}
+                        <span className="text-xs font-bold font-['Inter']">{task.Status}</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${task.Status === 'In Progress' ? 'bg-red-50 text-red-700' : 'text-slate-500'}`}>
+                        {task.Status === 'In Progress' ? <AlertCircle size={14} className="text-red-600" /> : <Clock size={14} />}
+                        <span className="text-xs font-bold font-['Inter']">Due: {new Date(task.DueDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <h3 className="text-zinc-900 text-lg font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-{task.WorkItemID}: {task.Title}</h3>
+                      <div className="flex items-center gap-1.5 text-slate-500">
+                        <MapPin size={16} />
+                        <span className="text-sm font-medium font-['Inter']">{task.Description}</span>
+                      </div>
+                    </div>
+                    <div className="pt-4 mt-auto">
+                      {task.Status === 'In Progress' ? (
+                        <button className="w-full py-2.5 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 transition-all text-white rounded-xl text-sm font-semibold font-['Inter'] shadow-md hover:shadow-lg active:scale-[0.98]">
+                          Update Progress
+                        </button>
+                      ) : (
+                        <button className="w-full py-2.5 bg-white border-2 border-sky-600 text-sky-700 hover:bg-sky-50 transition-all rounded-xl text-sm font-semibold font-['Inter'] active:scale-[0.98]">
+                          Start Task
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-full">
-                    <AlertCircle size={14} className="text-red-600" />
-                    <span className="text-red-700 text-xs font-bold font-['Inter']">Due: 10:30 AM</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="text-zinc-900 text-lg font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-882: Patient Vitals Check</h3>
-                  <div className="flex items-center gap-1.5 text-slate-500">
-                    <MapPin size={16} />
-                    <span className="text-sm font-medium font-['Inter']">Room 204</span>
-                  </div>
-                </div>
-                <div className="pt-4 mt-auto">
-                  <button className="w-full py-2.5 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 transition-all text-white rounded-xl text-sm font-semibold font-['Inter'] shadow-md hover:shadow-lg active:scale-[0.98]">
-                    Update Progress
-                  </button>
-                </div>
-              </div>
-
-              {/* Task Card 2 */}
-              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                <div className="flex justify-between items-center">
-                  <div className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full flex items-center gap-1.5">
-                    <Hourglass size={14} className="text-slate-600" />
-                    <span className="text-xs font-bold font-['Inter']">Pending</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 px-3 py-1.5">
-                    <Clock size={14} />
-                    <span className="text-xs font-bold font-['Inter']">Due: 11:15 AM</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="text-zinc-900 text-lg font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-895: Medication Admin</h3>
-                  <div className="flex items-center gap-1.5 text-slate-500">
-                    <BedDouble size={16} />
-                    <span className="text-sm font-medium font-['Inter']">ICU - Bed 04</span>
-                  </div>
-                </div>
-                <div className="pt-4 mt-auto">
-                  <button className="w-full py-2.5 bg-white border-2 border-sky-600 text-sky-700 hover:bg-sky-50 transition-all rounded-xl text-sm font-semibold font-['Inter'] active:scale-[0.98]">
-                    Start Task
-                  </button>
-                </div>
-              </div>
-
-              {/* Task Card 3 */}
-              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                <div className="flex justify-between items-center">
-                  <div className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full flex items-center gap-1.5">
-                    <Hourglass size={14} className="text-slate-600" />
-                    <span className="text-xs font-bold font-['Inter']">Pending</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 px-3 py-1.5">
-                    <Clock size={14} />
-                    <span className="text-xs font-bold font-['Inter']">Due: 01:00 PM</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="text-zinc-900 text-lg font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-901: Patient check</h3>
-                  <div className="flex items-center gap-1.5 text-slate-500">
-                    <BedDouble size={16} />
-                    <span className="text-sm font-medium font-['Inter']">Recovery Room 1</span>
-                  </div>
-                </div>
-                <div className="pt-4 mt-auto">
-                  <button className="w-full py-2.5 bg-white border-2 border-sky-600 text-sky-700 hover:bg-sky-50 transition-all rounded-xl text-sm font-semibold font-['Inter'] active:scale-[0.98]">
-                    Start Task
-                  </button>
-                </div>
-              </div>
+                ))
+              )}
             </div>
           </div>
 
