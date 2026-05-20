@@ -10,40 +10,63 @@ interface InitiateHandoverModalProps {
 
 export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [employees, setEmployees] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [myTasks, setMyTasks] = useState<any[]>([]);
   const [selectedToEmployee, setSelectedToEmployee] = useState('');
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Get logged-in user
+  const getUser = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) return JSON.parse(userStr);
+    } catch (e) { /* ignore */ }
+    return null;
+  };
+
   useEffect(() => {
     if (isOpen) {
+      const user = getUser();
+      if (!user) return;
+
+      // Load employees - exclude self from the list
       api.get('/employees').then(data => {
-        setEmployees(data);
-        if(data.length > 0) setSelectedToEmployee(data[0].EmployeeID.toString());
+        const otherEmployees = data.filter((e: any) => e.EmployeeID !== user.EmployeeID);
+        setEmployees(otherEmployees);
+        if (otherEmployees.length > 0) setSelectedToEmployee(otherEmployees[0].EmployeeID.toString());
       });
+
+      // Load only MY tasks (non-completed) that I can hand over
       api.get('/works').then(data => {
-        // filter pending tasks
-        setTasks(data.filter((t: any) => t.Status !== 'Completed'));
+        const mine = data.filter((t: any) =>
+          t.AssigneeName === user.Name && t.Status !== 'Completed'
+        );
+        setMyTasks(mine);
       });
+
+      // Reset state
+      setSelectedTasks([]);
+      setReason('');
     }
   }, [isOpen]);
 
   const handleSubmit = async () => {
-    if (!selectedToEmployee || selectedTasks.length === 0) return;
+    const user = getUser();
+    if (!user || !selectedToEmployee || selectedTasks.length === 0) return;
     setLoading(true);
     try {
-      // Create handover record
+      // Create handover record using logged-in user's ID
       const hoRes = await api.post('/handovers/initiate', {
-        fromEmployeeId: 2, // Hardcoded Nurse Minh ID for demo
+        fromEmployeeId: user.EmployeeID,
         toEmployeeId: parseInt(selectedToEmployee),
         reason: reason || 'Shift Transfer'
       });
 
-      // Add items
+      // Add each selected task as a handover item
       for (const taskId of selectedTasks) {
         await api.post(`/handovers/${hoRes.id}/items`, {
-          assignmentId: taskId, // Simplified for demo (assumes WorkItemID maps to AssignmentID loosely or backend handles it)
+          assignmentId: taskId,
           note: reason
         });
       }
@@ -67,6 +90,8 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
 
   if (!isOpen) return null;
 
+  const user = getUser();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col overflow-hidden animate-slide-up" onClick={(e) => e.stopPropagation()}>
@@ -77,7 +102,10 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
             <div className="w-10 h-10 bg-sky-50 text-sky-700 rounded-xl flex items-center justify-center">
               <ArrowRightLeft size={20} />
             </div>
-            <h2 className="text-zinc-900 text-xl font-bold font-['Inter']">Initiate Shift Handover</h2>
+            <div>
+              <h2 className="text-zinc-900 text-xl font-bold font-['Inter']">Initiate Shift Handover</h2>
+              <p className="text-slate-500 text-xs font-medium mt-0.5">From: {user?.Name || 'You'}</p>
+            </div>
           </div>
           <button 
             onClick={onClose}
@@ -106,19 +134,21 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
             </div>
           </div>
 
-          {/* Pending Tasks */}
+          {/* My Pending Tasks */}
           <div className="flex flex-col gap-3">
             <div className="flex justify-between items-end">
-              <label className="text-zinc-900 text-sm font-bold font-['Inter']">Select Pending Tasks to Transfer:</label>
-              <button 
-                onClick={() => setSelectedTasks(tasks.map(t => t.WorkItemID))}
-                className="text-sky-700 text-sm font-bold font-['Inter'] hover:underline"
-              >Select All</button>
+              <label className="text-zinc-900 text-sm font-bold font-['Inter']">Your Tasks to Transfer:</label>
+              {myTasks.length > 0 && (
+                <button 
+                  onClick={() => setSelectedTasks(myTasks.map(t => t.WorkItemID))}
+                  className="text-sky-700 text-sm font-bold font-['Inter'] hover:underline"
+                >Select All</button>
+              )}
             </div>
             
             <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-2 flex flex-col gap-1 shadow-sm max-h-48 overflow-y-auto">
-              {tasks.length === 0 && <span className="p-2 text-sm text-slate-500">No pending tasks to transfer.</span>}
-              {tasks.map(task => (
+              {myTasks.length === 0 && <span className="p-2 text-sm text-slate-500">You have no active tasks to transfer.</span>}
+              {myTasks.map(task => (
                 <label key={task.WorkItemID} className="flex items-start gap-3 p-3 hover:bg-white rounded-lg transition-colors cursor-pointer group">
                   <div className="pt-0.5">
                     <input 
@@ -130,8 +160,11 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-zinc-900 text-base font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-{task.WorkItemID}: {task.Title}</span>
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <span className="text-sm font-medium font-['Inter'] truncate">{task.Description}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                        task.Status === 'In Progress' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'
+                      }`}>{task.Status}</span>
+                      <span className="text-slate-500 text-sm font-medium font-['Inter'] truncate">{task.Description}</span>
                     </div>
                   </div>
                 </label>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ChevronDown, ArrowRight, Filter } from 'lucide-react';
 import api from '../../services/api';
 
 interface HandoverRecord {
@@ -24,6 +24,8 @@ const HandoverReview: React.FC = () => {
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const [handoverItems, setHandoverItems] = useState<HandoverItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('Pending Review');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     const fetchHandovers = async () => {
@@ -50,6 +52,19 @@ const HandoverReview: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Filter + sort
+  const filteredHandovers = handovers
+    .filter(h => {
+      if (statusFilter === 'All') return true;
+      if (statusFilter === 'Pending Review') return h.Status === 'Pending' || h.Status === 'Initiated' || h.Status === 'Submitted';
+      return h.Status === statusFilter;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.CreatedAt).getTime();
+      const dateB = new Date(b.CreatedAt).getTime();
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
   const activeHandover = handovers.find(h => h.HandOverID === activeTab);
 
   const updateStatus = async (status: string) => {
@@ -62,6 +77,11 @@ const HandoverReview: React.FC = () => {
     }
   };
 
+  // Stats
+  const pendingCount = handovers.filter(h => h.Status === 'Pending' || h.Status === 'Initiated' || h.Status === 'Submitted').length;
+  const approvedCount = handovers.filter(h => h.Status === 'Approved').length;
+  const rejectedCount = handovers.filter(h => h.Status === 'Rejected').length;
+
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-surface-variant overflow-hidden p-4 md:p-8 lg:p-10">
       <div className="max-w-[1280px] mx-auto w-full flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -70,14 +90,41 @@ const HandoverReview: React.FC = () => {
         <div>
           <h1 className="text-zinc-900 text-2xl font-bold tracking-tight">Handover Review</h1>
           <p className="text-gray-600 text-sm mt-1">Review and approve operational task transfers.</p>
+          {/* Stats */}
+          <div className="flex items-center gap-4 mt-2">
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{pendingCount} Pending</span>
+            <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">{approvedCount} Approved</span>
+            <span className="text-xs font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">{rejectedCount} Rejected</span>
+          </div>
         </div>
-        <div className="relative">
-          <select className="appearance-none pl-4 pr-10 py-2 bg-white border border-slate-300 rounded-md text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm font-medium cursor-pointer">
-            <option>Status: Pending Review</option>
-            <option>Status: Approved</option>
-            <option>Status: All</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
+        <div className="flex items-center gap-3">
+          {/* Sort */}
+          <div className="relative">
+            <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
+              className="appearance-none pl-4 pr-10 py-2 bg-white border border-slate-300 rounded-md text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm font-medium cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
+          </div>
+          {/* Filter */}
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="appearance-none pl-9 pr-10 py-2 bg-white border border-slate-300 rounded-md text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm font-medium cursor-pointer"
+            >
+              <option value="All">All Status</option>
+              <option value="Pending Review">Pending Review</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
+          </div>
         </div>
       </div>
 
@@ -88,18 +135,22 @@ const HandoverReview: React.FC = () => {
         <div className="w-full md:w-80 lg:w-96 flex-shrink-0 bg-white border-r border-slate-200 overflow-y-auto flex flex-col">
           {loading ? (
              <div className="p-5 text-slate-500 text-sm">Loading handovers...</div>
-          ) : handovers.length === 0 ? (
-             <div className="p-5 text-slate-500 text-sm">No handovers found.</div>
+          ) : filteredHandovers.length === 0 ? (
+             <div className="p-5 text-slate-500 text-sm">No handovers match your filter.</div>
           ) : (
-            handovers.map(ho => (
+            filteredHandovers.map(ho => (
               <button 
                 key={ho.HandOverID}
                 className={`w-full text-left p-5 flex flex-col gap-2.5 transition-colors focus:outline-none border-r-4 ${activeTab === ho.HandOverID ? 'bg-sky-50 border-sky-700' : 'bg-white border-transparent border-b border-slate-100 hover:bg-slate-50'}`}
                 onClick={() => setActiveTab(ho.HandOverID)}
               >
                 <div className="flex justify-between items-center w-full">
-                  <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded ${ho.Status === 'Pending' || ho.Status === 'Initiated' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>{ho.Status}</span>
-                  <span className="text-xs font-medium text-slate-500">{new Date(ho.CreatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded ${
+                    ho.Status === 'Approved' ? 'bg-green-100 text-green-800' : 
+                    ho.Status === 'Rejected' ? 'bg-rose-100 text-rose-800' : 
+                    'bg-amber-100 text-amber-800'
+                  }`}>{ho.Status}</span>
+                  <span className="text-xs font-medium text-slate-500">{new Date(ho.CreatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
                 </div>
                 <h3 className="text-slate-900 text-base font-semibold">{ho.Reason}</h3>
                 <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -123,13 +174,35 @@ const HandoverReview: React.FC = () => {
                   Handover Details <span className="text-slate-400">#HO-{activeHandover.HandOverID}</span>
                 </h2>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => updateStatus('Rejected')} className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200">
-                    Request Revision
-                  </button>
-                  <button onClick={() => updateStatus('Approved')} className="px-5 py-2.5 text-sm font-medium text-white bg-sky-700 rounded-lg shadow-sm hover:bg-sky-800 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">
-                    Approve Handover
-                  </button>
+                  {activeHandover.Status !== 'Rejected' && (
+                    <button onClick={() => updateStatus('Rejected')} className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200">
+                      Request Revision
+                    </button>
+                  )}
+                  {activeHandover.Status !== 'Approved' && (
+                    <button onClick={() => updateStatus('Approved')} className="px-5 py-2.5 text-sm font-medium text-white bg-sky-700 rounded-lg shadow-sm hover:bg-sky-800 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1">
+                      Approve Handover
+                    </button>
+                  )}
+                  {(activeHandover.Status === 'Approved' || activeHandover.Status === 'Rejected') && (
+                    <button onClick={() => updateStatus('Pending')} className="px-5 py-2.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-300 rounded-lg hover:bg-amber-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-200">
+                      Reset to Pending
+                    </button>
+                  )}
                 </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold w-fit ${
+                activeHandover.Status === 'Approved' ? 'bg-green-100 text-green-800 border border-green-200' :
+                activeHandover.Status === 'Rejected' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                'bg-amber-100 text-amber-800 border border-amber-200'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  activeHandover.Status === 'Approved' ? 'bg-green-600' :
+                  activeHandover.Status === 'Rejected' ? 'bg-rose-600' : 'bg-amber-600'
+                }`}></div>
+                Status: {activeHandover.Status}
               </div>
 
               {/* Info Card */}

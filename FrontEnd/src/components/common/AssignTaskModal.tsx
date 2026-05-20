@@ -50,9 +50,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({ isOpen, onClos
       });
 
       // 2. Assign to Employee
+      const userStr = localStorage.getItem('user');
+      const managerId = userStr ? JSON.parse(userStr).EmployeeID : 1;
       await api.post(`/works/${workRes.id}/assign`, {
         employeeId: parseInt(selectedEmployeeId),
-        assignedBy: 1, // Hardcoded Manager ID for demo
+        assignedBy: managerId,
         roleInWork: 'Primary'
       });
 

@@ -1,6 +1,22 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const { sql, poolPromise } = require('../config/db');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_123';
+
+const getUserFromToken = (req) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+            return jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+};
 
 /**
  * MODULE: HANDOVER MANAGEMENT
@@ -79,11 +95,44 @@ router.put('/:id/review', async (req, res) => {
     }
 });
 
+// [USE CASE: Accept Handover] - Người nhận chấp nhận bản bàn giao
+router.post('/:id/accept', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('HandOverID', sql.Int, req.params.id)
+            .input('Status', sql.NVarChar, 'Approved')
+            .query('UPDATE HandOverRecord SET Status = @Status WHERE HandOverID = @HandOverID');
+        
+        res.json({ message: 'Handover Accepted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// [USE CASE: Reject Handover] - Người nhận từ chối bản bàn giao
+router.post('/:id/reject', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        await pool.request()
+            .input('HandOverID', sql.Int, req.params.id)
+            .input('Status', sql.NVarChar, 'Rejected')
+            .query('UPDATE HandOverRecord SET Status = @Status WHERE HandOverID = @HandOverID');
+        
+        res.json({ message: 'Handover Rejected' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // [USE CASE: View Handover Records] - Xem danh sách các lịch sử bàn giao
 router.get('/', async (req, res) => {
     try {
         const pool = await poolPromise;
-        const query = `
+        const user = getUserFromToken(req);
+        const { employeeId } = req.query;
+        
+        let query = `
             SELECT h.*, 
                    e1.Name as FromName,
                    e2.Name as ToName
@@ -91,7 +140,20 @@ router.get('/', async (req, res) => {
             LEFT JOIN Employee e1 ON h.FromEmployeeID = e1.EmployeeID
             LEFT JOIN Employee e2 ON h.ToEmployeeID = e2.EmployeeID
         `;
-        const result = await pool.request().query(query);
+        
+        const request = pool.request();
+        
+        if (user && user.role !== 'Manager') {
+            query += ` WHERE h.FromEmployeeID = @EmployeeID OR h.ToEmployeeID = @EmployeeID`;
+            request.input('EmployeeID', sql.Int, user.id);
+        } else if (employeeId) {
+            query += ` WHERE h.FromEmployeeID = @EmployeeID OR h.ToEmployeeID = @EmployeeID`;
+            request.input('EmployeeID', sql.Int, parseInt(employeeId));
+        }
+        
+        query += ` ORDER BY h.CreatedAt DESC`;
+        
+        const result = await request.query(query);
         res.json(result.recordset);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -102,13 +164,29 @@ router.get('/', async (req, res) => {
 router.get('/:id/items', async (req, res) => {
     try {
         const pool = await poolPromise;
-        const query = `
+        const user = getUserFromToken(req);
+        
+        if (user && user.role !== 'Manager') {
+            const checkQuery = \`SELECT FromEmployeeID, ToEmployeeID FROM HandOverRecord WHERE HandOverID = @CheckID\`;
+            const checkResult = await pool.request()
+                .input('CheckID', sql.Int, req.params.id)
+                .query(checkQuery);
+                
+            if (checkResult.recordset.length > 0) {
+                const ho = checkResult.recordset[0];
+                if (ho.FromEmployeeID !== user.id && ho.ToEmployeeID !== user.id) {
+                    return res.status(403).json({ message: 'Forbidden: You can only view your own handovers' });
+                }
+            }
+        }
+        
+        const query = \`
             SELECT hi.*, w.Title, w.Description, w.WorkItemID
             FROM HandOverItem hi
             LEFT JOIN WorkAssignment wa ON hi.AssignmentID = wa.AssignmentID
             LEFT JOIN WorkItem w ON wa.WorkItemID = w.WorkItemID
             WHERE hi.HandOverID = @HandOverID
-        `;
+        \`;
         const result = await pool.request()
             .input('HandOverID', sql.Int, req.params.id)
             .query(query);

@@ -17,7 +17,12 @@ export const Topbar: React.FC<TopbarProps> = ({ onLogout }) => {
   const formattedTime = currentTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const formattedDate = currentTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
   const hours = currentTime.getHours();
-  const shift = hours >= 7 && hours < 19 ? 'AM Shift' : 'PM Shift';
+  let shift = 'Night Shift';
+  if (hours >= 7 && hours < 15) {
+    shift = 'Morning Shift';
+  } else if (hours >= 15 && hours < 23) {
+    shift = 'Afternoon Shift';
+  }
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0 relative">

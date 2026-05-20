@@ -13,10 +13,16 @@ import Login from './pages/auth/Login';
 
 const App: React.FC = () => {
   const [userRole, setUserRole] = useState<'manager' | 'employee' | null>(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const parsed = JSON.parse(user);
-      return parsed.Role.toLowerCase().includes('manager') ? 'manager' : 'employee';
+    try {
+      const user = localStorage.getItem('user');
+      if (user) {
+        const parsed = JSON.parse(user);
+        if (parsed && typeof parsed.Role === 'string') {
+          return parsed.Role.toLowerCase().includes('manager') ? 'manager' : 'employee';
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing user from localStorage', e);
     }
     return null;
   });
@@ -56,7 +62,7 @@ const App: React.FC = () => {
         
         {userRole === 'manager' && (
           <>
-            {currentPage === 'Dashboard' && <Dashboard />}
+            {currentPage === 'Dashboard' && <Dashboard onNavigate={setCurrentPage} />}
             {currentPage === 'WorkManagement' && <WorkManagement />}
             {currentPage === 'HandoverReview' && <HandoverReview />}
             {currentPage === 'BottleneckDashboard' && <BottleneckDashboard />}

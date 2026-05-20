@@ -7,7 +7,37 @@ export interface ConfirmTaskUpdateModalProps {
   task?: { id: string; name: string; status: string } | null;
 }
 
+import api from '../../services/api';
+
 const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen, onClose, task }) => {
+  const [status, setStatus] = React.useState('');
+  const [note, setNote] = React.useState('');
+
+  React.useEffect(() => {
+    if (task) {
+      setStatus(task.status === 'Pending' ? 'In Progress' : task.status === 'In Progress' ? 'Completed' : 'Pending');
+    }
+  }, [task]);
+
+  const handleConfirm = async () => {
+    if (!task) return;
+    try {
+      const userStr = localStorage.getItem('user');
+      const employeeId = userStr ? JSON.parse(userStr).EmployeeID : 1;
+      // Work id string is like "T-882", so we remove "T-"
+      const workId = task.id.startsWith('T-') ? task.id.slice(2) : task.id;
+      
+      await api.put(`/works/${workId}/progress`, {
+        status,
+        employeeId,
+        contextNote: note
+      });
+      onClose();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!isOpen || !task) return null;
 
   return (
@@ -42,7 +72,11 @@ const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen,
           <div className="flex flex-col gap-2">
             <label className="text-zinc-900 text-sm font-bold font-['Inter']">New Status</label>
             <div className="relative">
-              <select className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 hover:border-sky-300 rounded-xl appearance-none outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 text-zinc-900 text-base font-semibold font-['Inter'] transition-all shadow-sm cursor-pointer">
+              <select 
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 hover:border-sky-300 rounded-xl appearance-none outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 text-zinc-900 text-base font-semibold font-['Inter'] transition-all shadow-sm cursor-pointer"
+              >
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
                 <option value="Pending">Pending</option>
@@ -57,6 +91,8 @@ const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen,
               Clinical Notes / Updates <span className="text-slate-500 font-medium">(Optional)</span>
             </label>
             <textarea 
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
               className="w-full min-h-[120px] p-4 bg-white border border-slate-200 hover:border-sky-300 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 rounded-xl outline-none resize-y text-zinc-900 text-base font-medium font-['Inter'] placeholder-slate-400 transition-all shadow-sm"
               placeholder="Enter any relevant clinical observations..."
             ></textarea>
@@ -72,7 +108,9 @@ const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen,
           >
             Cancel
           </button>
-          <button className="px-6 py-2.5 bg-sky-700 text-white font-bold font-['Inter'] rounded-xl hover:bg-sky-800 transition-all flex items-center gap-2 shadow-sm active:scale-[0.98]">
+          <button 
+            onClick={handleConfirm}
+            className="px-6 py-2.5 bg-sky-700 text-white font-bold font-['Inter'] rounded-xl hover:bg-sky-800 transition-all flex items-center gap-2 shadow-sm active:scale-[0.98]">
             <CheckCircle2 size={16} />
             <span>Confirm</span>
           </button>

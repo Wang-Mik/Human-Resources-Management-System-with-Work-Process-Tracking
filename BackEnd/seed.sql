@@ -24,7 +24,11 @@ GO
 INSERT INTO Employee (Name, Email, Password, Role, Department, Position, EmploymentStatus)
 VALUES 
     (N'Nguyễn Anh Khoa', 'khoa@hospital.com', 'password123', 'Manager', 'Internal Medicine', 'Head Manager', 'Active'),
-    (N'Phan Quang Minh', 'minh@hospital.com', 'password123', 'Employee', 'Internal Medicine', 'Nurse', 'Active');
+    (N'Phan Quang Minh', 'minh@hospital.com', 'password123', 'Employee', 'Internal Medicine', 'Nurse', 'Active'),
+    (N'Lê Trần Hải', 'hai@hospital.com', 'password123', 'Manager', 'Emergency Room', 'Head ER', 'Active'),
+    (N'Trần Kim Dung', 'dung@hospital.com', 'password123', 'Employee', 'Emergency Room', 'Doctor', 'Active'),
+    (N'Phạm Vũ Nhật', 'nhat@hospital.com', 'password123', 'Employee', 'ICU', 'Technician', 'Active'),
+    (N'Ngô Bích Ngọc', 'ngoc@hospital.com', 'password123', 'Employee', 'Cardiology', 'Nurse', 'Active');
 GO
 
 DECLARE @ManagerID INT = (SELECT EmployeeID FROM Employee WHERE Email = 'khoa@hospital.com');

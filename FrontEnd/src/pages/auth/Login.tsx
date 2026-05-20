@@ -7,9 +7,21 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('khoa@hospital.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    api.get('/employees')
+       .then(data => setEmployees(data))
+       .catch(err => console.error('Failed to load employees', err));
+  }, []);
+
+  const handleTestLogin = (empEmail: string) => {
+    setEmail(empEmail);
+    setPassword('password123'); // seed.sql uses this
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +99,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </form>
 
         <div className="flex flex-col items-center gap-4 pt-6 border-t border-slate-200">
-          <button className="text-sky-700 hover:text-sky-800 text-sm font-semibold transition-colors">
+          <div className="w-full">
+            <p className="text-xs text-slate-500 font-semibold mb-3 uppercase tracking-wider text-center">Quick Login (Test Accounts)</p>
+            <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+              {employees.map(emp => (
+                <button
+                  key={emp.EmployeeID}
+                  type="button"
+                  onClick={() => handleTestLogin(emp.Email)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-800 text-xs font-medium rounded-lg border border-slate-200 hover:border-sky-300 transition-colors flex items-center gap-1.5"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${emp.Role === 'Manager' ? 'bg-sky-500' : 'bg-emerald-500'}`}></span>
+                  {emp.Name} ({emp.Role})
+                </button>
+              ))}
+            </div>
+          </div>
+          <button className="text-sky-700 hover:text-sky-800 text-sm font-semibold transition-colors mt-2">
             Forgot Password?
           </button>
           <button className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 transition-colors">
