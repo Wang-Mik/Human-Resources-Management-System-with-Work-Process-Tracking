@@ -5,12 +5,8 @@ const { sql, poolPromise } = require('../config/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_123';
 
-/**
+/*
  * MODULE: AUTHENTICATION
- * Tình trạng: [BỔ SUNG] - Không có trong sơ đồ thiết kế Use Case gốc nhưng là BẮT BUỘC phải có để:
- * 1. Đăng nhập hệ thống (Employee / Manager).
- * 2. Cấp JWT Token để gọi các API khác.
- * 3. Lấy thông tin user hiện tại.
  */
 
 // Đăng nhập
@@ -42,7 +38,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Đăng ký (Tuỳ chọn - dùng để tạo tài khoản ban đầu)
+// Đăng ký
 // router.post('/register', async (req, res) => {
 //     try {
 //         const { name, email, password, role } = req.body;
@@ -60,7 +56,7 @@ router.post('/login', async (req, res) => {
 //     }
 // });
 
-// Lấy thông tin tài khoản hiện tại (thường truyền JWT Token trên Header)
+// Lấy thông tin tài khoản hiện tại
 router.get('/me', (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

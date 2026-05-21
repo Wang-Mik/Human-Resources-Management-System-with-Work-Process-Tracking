@@ -4,40 +4,50 @@ const { sql, poolPromise } = require('../config/db');
 
 /**
  * MODULE: WORKFORCE AVAILABILITY
- * Dựa trên Use Case: "Module 4: Workforce Ability"
- * Bảng liên quan: Attendance, EmployeeAvailability
  */
 
-// [USE CASE: Record Attendance] - Nhân viên check-in / check-out
 router.post('/attendance', async (req, res) => {
     try {
-        const { employeeId, type } = req.body; // type: 'CheckIn' or 'CheckOut'
+        const { employeeId, type } = req.body;
         const pool = await poolPromise;
-        
+
         if (type === 'CheckIn') {
+            // Block if there is already an open session
+            const openSession = await pool.request()
+                .input('EmployeeID', sql.Int, employeeId)
+                .query(`SELECT TOP 1 AttendanceID FROM Attendance
+                        WHERE EmployeeID = @EmployeeID
+                          AND WorkingDate = CAST(GETDATE() AS DATE)
+                          AND CheckOutTime IS NULL`);
+
+            if (openSession.recordset.length > 0) {
+                return res.status(409).json({ error: 'Already clocked in' });
+            }
+
             await pool.request()
                 .input('EmployeeID', sql.Int, employeeId)
-                .input('WorkingDate', sql.Date, new Date())
                 .input('CheckInTime', sql.DateTime, new Date())
-                .input('Status', sql.NVarChar, 'Present')
-                .query(`INSERT INTO Attendance (EmployeeID, WorkingDate, CheckInTime, Status) 
-                        VALUES (@EmployeeID, @WorkingDate, @CheckInTime, @Status)`);
+                .query(`INSERT INTO Attendance (EmployeeID, WorkingDate, CheckInTime, Status)
+                        VALUES (@EmployeeID, CAST(GETDATE() AS DATE), @CheckInTime, 'Present')`);
+
         } else if (type === 'CheckOut') {
+            // Close only the most recent open session
             await pool.request()
                 .input('EmployeeID', sql.Int, employeeId)
-                .input('WorkingDate', sql.Date, new Date())
                 .input('CheckOutTime', sql.DateTime, new Date())
-                .query(`UPDATE Attendance SET CheckOutTime = @CheckOutTime 
-                        WHERE EmployeeID = @EmployeeID AND WorkingDate = @WorkingDate`);
+                .query(`UPDATE TOP(1) Attendance SET CheckOutTime = @CheckOutTime
+                        WHERE EmployeeID = @EmployeeID
+                          AND WorkingDate = CAST(GETDATE() AS DATE)
+                          AND CheckOutTime IS NULL`);
         }
-        
+
         res.json({ message: `Attendance ${type} recorded successfully` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// [USE CASE: Update Availability Status] - Cập nhật trạng thái (Available, Busy, Emergency) và lý do (nếu có)
+// Update availability status (Available / Busy / Emergency)
 router.post('/status', async (req, res) => {
     try {
         const { employeeId, status, reason } = req.body;
@@ -47,21 +57,34 @@ router.post('/status', async (req, res) => {
             .input('StartTime', sql.DateTime, new Date())
             .input('Status', sql.NVarChar, status)
             .input('Reason', sql.NVarChar, reason || '')
-            .query(`INSERT INTO EmployeeAvailability (EmployeeID, StartTime, Status, Reason) 
+            .query(`INSERT INTO EmployeeAvailability (EmployeeID, StartTime, Status, Reason)
                     VALUES (@EmployeeID, @StartTime, @Status, @Reason)`);
-        
         res.json({ message: 'Availability status updated' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// [USE CASE: View Employee Availability] - Lấy danh sách nhân viên và trạng thái hiện tại của họ
+// Get the most recent attendance record for today for a specific employee
+router.get('/attendance/today/:employeeId', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('EmployeeID', sql.Int, req.params.employeeId)
+            .query(`SELECT TOP 1 * FROM Attendance
+                    WHERE EmployeeID = @EmployeeID AND WorkingDate = CAST(GETDATE() AS DATE)
+                    ORDER BY CheckInTime DESC`);
+        res.json(result.recordset[0] || null);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/', async (req, res) => {
     try {
         const pool = await poolPromise;
         const result = await pool.request().query(`
-            SELECT e.EmployeeID, e.Name, e.Department, e.Role, 
+            SELECT e.EmployeeID, e.Name, e.Department, e.Role,
                    COALESCE(ea.Status, 'Available') as CurrentStatus
             FROM Employee e
             LEFT JOIN (

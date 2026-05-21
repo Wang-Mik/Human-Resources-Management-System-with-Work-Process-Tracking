@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, LogIn, LifeBuoy } from 'lucide-react';
+import { Mail, Lock, LogIn } from 'lucide-react';
 import api from '../../services/api';
 
 interface LoginProps {
@@ -20,10 +20,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleTestLogin = (empEmail: string) => {
     setEmail(empEmail);
-    setPassword('password123'); // seed.sql uses this
+    setPassword('password123'); // test purpose only
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     try {
@@ -39,7 +39,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
-      {/* Decorative background shapes */}
       <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-sky-200/50 blur-3xl"></div>
       <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[30rem] h-[30rem] rounded-full bg-indigo-100/50 blur-3xl"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full bg-emerald-50/50 blur-3xl"></div>
@@ -100,7 +99,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="flex flex-col items-center gap-4 pt-6 border-t border-slate-200">
           <div className="w-full">
-            <p className="text-xs text-slate-500 font-semibold mb-3 uppercase tracking-wider text-center">Quick Login (Test Accounts)</p>
+            <p className="text-xs text-slate-500 font-semibold mb-3 uppercase tracking-wider text-center"> (Test Accounts)</p>
             <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto custom-scrollbar">
               {employees.map(emp => (
                 <button
@@ -117,10 +116,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
           <button className="text-sky-700 hover:text-sky-800 text-sm font-semibold transition-colors mt-2">
             Forgot Password?
-          </button>
-          <button className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 transition-colors">
-            <LifeBuoy size={14} />
-            <span className="text-xs font-medium">Contact Support</span>
           </button>
         </div>
 

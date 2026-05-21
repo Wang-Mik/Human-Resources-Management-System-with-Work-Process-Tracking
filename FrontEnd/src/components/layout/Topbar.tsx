@@ -22,7 +22,10 @@ export const Topbar: React.FC<TopbarProps> = ({ onLogout }) => {
     shift = 'Morning Shift';
   } else if (hours >= 15 && hours < 23) {
     shift = 'Afternoon Shift';
+  } else if (hours >= 23 || hours < 7) {
+    shift = 'Night Shift';
   }
+
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0 relative">

@@ -4,12 +4,8 @@ const { sql, poolPromise } = require('../config/db');
 
 /**
  * MODULE: EMPLOYEE
- * Tình trạng: [BỔ SUNG] - Không có trong sơ đồ thiết kế Use Case gốc nhưng CẦN THIẾT để:
- * 1. Manager lấy danh sách nhân viên để gán việc (Assign Work).
- * 2. Employee lấy danh sách đồng nghiệp để Bàn giao (Initiate Handover).
  */
 
-// Lấy danh sách tất cả nhân viên (có thể lọc theo phòng ban, trạng thái)
 router.get('/', async (req, res) => {
     try {
         const pool = await poolPromise;
@@ -20,7 +16,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Lấy chi tiết một nhân viên
 router.get('/:id', async (req, res) => {
     try {
         const pool = await poolPromise;
@@ -35,7 +30,6 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Thêm thông tin nhân viên (dành cho Admin)
 router.post('/', async (req, res) => {
     try {
         const { name, email, password, role, department, position, status } = req.body;
@@ -43,7 +37,7 @@ router.post('/', async (req, res) => {
         await pool.request()
             .input('Name', sql.NVarChar, name)
             .input('Email', sql.NVarChar, email)
-            .input('Password', sql.NVarChar, password) // Note: Should be hashed in real app
+            .input('Password', sql.NVarChar, password) 
             .input('Role', sql.NVarChar, role)
             .input('Department', sql.NVarChar, department)
             .input('Position', sql.NVarChar, position)
@@ -55,9 +49,8 @@ router.post('/', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+});//not implemented in front end
 
-// Sửa thông tin nhân viên
 router.put('/:id', async (req, res) => {
     try {
         const { name, department, position, status } = req.body;

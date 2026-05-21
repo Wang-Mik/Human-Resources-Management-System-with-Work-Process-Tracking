@@ -4,11 +4,9 @@ const { sql, poolPromise } = require('../config/db');
 
 /**
  * MODULE: BOTTLENECK MANAGEMENT
- * Dựa trên Use Case: "Module 3: Bottleneck Management"
- * Bảng liên quan: OperationalStatusLog, TaskHistoryLog, WorkAssignment
  */
 
-// [USE CASE: Monitor Workload] - Lấy dữ liệu tổng quan về phân bổ khối lượng công việc
+// [Monitor Workload] - Lấy dữ liệu tổng quan về phân bổ khối lượng công việc
 router.get('/workload', async (req, res) => {
     try {
         const pool = await poolPromise;
@@ -28,11 +26,11 @@ router.get('/workload', async (req, res) => {
     }
 });
 
-// [USE CASE: Detect Bottleneck] - Chạy thuật toán/logic để tìm ra nút thắt cổ chai
+// [Detect Bottleneck]
 router.get('/detect', async (req, res) => {
     try {
         const pool = await poolPromise;
-        // Simple logic: tasks that are overdue or employees with > 10 active tasks
+        // employees with > 10 active tasks
         const overdueTasks = await pool.request().query(`
             SELECT * FROM WorkItem 
             WHERE DueDate < GETDATE() AND Status != 'Completed'
@@ -56,11 +54,10 @@ router.get('/detect', async (req, res) => {
     }
 });
 
-// [USE CASE: Suggest Reassignment] - Gợi ý gán lại công việc dựa trên phân tích
+// [Suggest Reassignment]
 router.get('/suggestions/:workId', async (req, res) => {
     try {
         const pool = await poolPromise;
-        // Find employees in the same department with fewest active tasks
         const result = await pool.request()
             .input('WorkItemID', sql.Int, req.params.workId)
             .query(`
@@ -78,13 +75,12 @@ router.get('/suggestions/:workId', async (req, res) => {
     }
 });
 
-// [USE CASE: Reassign Work] - Chấp nhận gợi ý hoặc tự động gán lại công việc cho nhân viên khác
+// [Reassign Work]
 router.post('/reassign', async (req, res) => {
     try {
         const { workItemId, newEmployeeId, reassignedBy, reason } = req.body;
         const pool = await poolPromise;
         
-        // 1. Unassign current
         await pool.request()
             .input('WorkItemID', sql.Int, workItemId)
             .input('UnAssignedAt', sql.DateTime, new Date())
@@ -92,7 +88,6 @@ router.post('/reassign', async (req, res) => {
                     SET AssignmentStatus = 'Unassigned', UnAssignedAt = @UnAssignedAt 
                     WHERE WorkItemID = @WorkItemID AND AssignmentStatus IN ('Assigned', 'Active')`);
         
-        // 2. Assign new
         await pool.request()
             .input('WorkItemID', sql.Int, workItemId)
             .input('EmployeeID', sql.Int, newEmployeeId)
@@ -103,7 +98,6 @@ router.post('/reassign', async (req, res) => {
             .query(`INSERT INTO WorkAssignment (WorkItemID, EmployeeID, AssignedBy, AssignedAt, AssignmentStatus, RoleInWork) 
                     VALUES (@WorkItemID, @EmployeeID, @AssignedBy, @AssignedAt, @AssignmentStatus, @RoleInWork)`);
         
-        // 3. Log History
         await pool.request()
             .input('WorkItemID', sql.Int, workItemId)
             .input('EmployeeID', sql.Int, reassignedBy)
