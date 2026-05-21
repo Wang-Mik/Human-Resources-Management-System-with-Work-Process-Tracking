@@ -120,7 +120,7 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
           
           {/* Transfer To */}
           <div className="flex flex-col gap-2">
-            <label className="text-zinc-900 text-sm font-bold font-['Inter']">Transfer to (Employee):</label>
+            <label className="text-zinc-900 text-sm font-bold font-['Inter']">Transfer to:</label>
             <div className="relative">
               <select 
                 value={selectedToEmployee}
@@ -174,7 +174,7 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
 
           {/* Risk / Clinical Notes */}
           <div className="flex flex-col gap-2">
-            <label className="text-zinc-900 text-sm font-bold font-['Inter']">Risk / Clinical Notes</label>
+            <label className="text-zinc-900 text-sm font-bold font-['Inter']">Notes</label>
             <textarea 
               value={reason}
               onChange={e => setReason(e.target.value)}

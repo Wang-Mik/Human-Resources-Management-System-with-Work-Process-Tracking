@@ -141,7 +141,7 @@ const MyHandovers: React.FC = () => {
         <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm w-fit">
           <button
             onClick={() => setActiveFilter('received')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeFilter === 'received' ? 'bg-sky-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${activeFilter === 'received' ? 'bg-sky-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
           >
             Received ({receivedCount})
           </button>
@@ -149,13 +149,13 @@ const MyHandovers: React.FC = () => {
             onClick={() => setActiveFilter('sent')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${activeFilter === 'sent' ? 'bg-sky-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
           >
-            <ArrowRight size={14} /> Sent ({sentCount})
+            Sent ({sentCount})
           </button>
           <button
             onClick={() => setActiveFilter('all')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${activeFilter === 'all' ? 'bg-sky-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
           >
-            <ArrowLeft size={14} /> All ({handovers.length})
+            All ({handovers.length})
           </button>
         </div>
 
@@ -291,7 +291,7 @@ const MyHandovers: React.FC = () => {
                                         <span className="text-xs text-slate-600 line-clamp-2">{item.Description}</span>
                                         {item.Note && (
                                           <div className="mt-2 p-2 bg-slate-50 rounded border border-slate-100 text-xs text-slate-700">
-                                            <span className="font-semibold text-slate-500 block mb-0.5">Clinical Note:</span>
+                                            <span className="font-semibold text-slate-500 block mb-0.5">Note:</span>
                                             {item.Note}
                                           </div>
                                         )}
