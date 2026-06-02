@@ -52,7 +52,8 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
             const myAssign = t.Assignees.find((a: any) => a.EmployeeID === user.EmployeeID);
             return {
               ...t,
-              AssignmentID: myAssign ? myAssign.AssignmentID : null
+              AssignmentID: myAssign ? myAssign.AssignmentID : null,
+              IsHandoverPending: myAssign ? myAssign.IsHandoverPending : 0
             };
           });
         setMyTasks(mine);
@@ -153,7 +154,7 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
               <label className="text-zinc-900 text-sm font-bold font-['Inter']">Your Tasks to Transfer:</label>
               {myTasks.length > 0 && (
                 <button 
-                  onClick={() => setSelectedTasks(myTasks.map(t => t.AssignmentID).filter(Boolean))}
+                  onClick={() => setSelectedTasks(myTasks.filter(t => t.IsHandoverPending !== 1).map(t => t.AssignmentID).filter(Boolean))}
                   className="text-sky-700 text-sm font-bold font-['Inter'] hover:underline"
                 >Select All</button>
               )}
@@ -161,27 +162,34 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
             
             <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-2 flex flex-col gap-1 shadow-sm max-h-48 overflow-y-auto">
               {myTasks.length === 0 && <span className="p-2 text-sm text-slate-500">You have no active tasks to transfer.</span>}
-              {myTasks.map(task => (
-                <label key={task.WorkItemID} className="flex items-start gap-3 p-3 hover:bg-white rounded-lg transition-colors cursor-pointer group">
-                  <div className="pt-0.5">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedTasks.includes(task.AssignmentID)}
-                      onChange={() => toggleTask(task.AssignmentID)}
-                      className="w-5 h-5 rounded text-sky-700 focus:ring-sky-500 focus:ring-offset-0 border-slate-300 bg-white" 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-zinc-900 text-base font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-{task.WorkItemID}: {task.Title}</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
-                        task.Status === 'In Progress' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'
-                      }`}>{task.Status}</span>
-                      <span className="text-slate-500 text-sm font-medium font-['Inter'] truncate">{task.Description}</span>
+              {myTasks.map(task => {
+                const isPending = task.IsHandoverPending === 1;
+                return (
+                  <label key={task.WorkItemID} className={`flex items-start gap-3 p-3 hover:bg-white rounded-lg transition-colors cursor-pointer group ${isPending ? 'opacity-60 cursor-not-allowed bg-slate-100/50' : ''}`}>
+                    <div className="pt-0.5">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTasks.includes(task.AssignmentID)}
+                        disabled={isPending}
+                        onChange={() => toggleTask(task.AssignmentID)}
+                        className="w-5 h-5 rounded text-sky-700 focus:ring-sky-500 focus:ring-offset-0 border-slate-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed" 
+                      />
                     </div>
-                  </div>
-                </label>
-              ))}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-zinc-900 text-base font-bold font-['Inter'] group-hover:text-sky-700 transition-colors">T-{task.WorkItemID}: {task.Title}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                          task.Status === 'In Progress' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'
+                        }`}>{task.Status}</span>
+                        {isPending && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-700">Handover Pending</span>
+                        )}
+                        <span className="text-slate-500 text-sm font-medium font-['Inter'] truncate">{task.Description}</span>
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -192,7 +200,7 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
               value={reason}
               onChange={e => setReason(e.target.value)}
               className="w-full min-h-[120px] p-4 bg-white border border-slate-200 hover:border-sky-300 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 rounded-xl outline-none resize-y text-zinc-900 text-base font-medium font-['Inter'] placeholder-slate-400 transition-all shadow-sm"
-              placeholder="Enter any critical dependencies or patient monitoring notes for the next shift..."
+              placeholder="Enter notes (e.g. Monitor blood pressure for patient Nguyen Van A at Bed 4)..."
             ></textarea>
           </div>
 

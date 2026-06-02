@@ -108,7 +108,7 @@ const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen,
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className="w-full min-h-[120px] p-4 bg-white border border-slate-200 hover:border-sky-300 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 rounded-xl outline-none resize-y text-zinc-900 text-base font-medium font-['Inter'] placeholder-slate-400 transition-all shadow-sm"
-              placeholder="Enter any relevant clinical observations..."
+              placeholder="e.g. Patient is stable, completed medication dose..."
             ></textarea>
           </div>
 

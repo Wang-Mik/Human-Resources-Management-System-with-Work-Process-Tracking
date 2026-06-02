@@ -15,10 +15,11 @@ router.get('/workload', async (req, res) => {
                 e.EmployeeID, 
                 e.Name, 
                 e.Department, 
-                COUNT(DISTINCT wa.AssignmentID) as ActiveTasks,
+                COUNT(DISTINCT CASE WHEN wi.Status IS NOT NULL AND wi.Status != 'Completed' THEN wa.AssignmentID END) as ActiveTasks,
                 MAX(CASE WHEN att.AttendanceID IS NOT NULL THEN 1 ELSE 0 END) as IsClockedIn
             FROM Employee e
             LEFT JOIN WorkAssignment wa ON e.EmployeeID = wa.EmployeeID AND wa.AssignmentStatus IN ('Assigned', 'Active')
+            LEFT JOIN WorkItem wi ON wa.WorkItemID = wi.WorkItemID
             LEFT JOIN Attendance att ON e.EmployeeID = att.EmployeeID 
                 AND att.WorkingDate = CAST(GETDATE() AS DATE) 
                 AND att.CheckOutTime IS NULL
@@ -43,12 +44,13 @@ router.get('/detect', async (req, res) => {
         // Find staff who have more than 5 tasks going on
         const overloadedStaff = await pool.request().query(`
             SELECT 
-                e.EmployeeID, e.Name, COUNT(wa.AssignmentID) as TaskCount
+                e.EmployeeID, e.Name, COUNT(DISTINCT wa.AssignmentID) as TaskCount
             FROM Employee e
             JOIN WorkAssignment wa ON e.EmployeeID = wa.EmployeeID
-            WHERE wa.AssignmentStatus IN ('Assigned', 'Active')
+            JOIN WorkItem wi ON wa.WorkItemID = wi.WorkItemID
+            WHERE wa.AssignmentStatus IN ('Assigned', 'Active') AND wi.Status != 'Completed'
             GROUP BY e.EmployeeID, e.Name
-            HAVING COUNT(wa.AssignmentID) > 5
+            HAVING COUNT(DISTINCT wa.AssignmentID) > 5
         `);
         
         res.json({
@@ -67,9 +69,10 @@ router.get('/suggestions/:workId', async (req, res) => {
         const result = await pool.request()
             .input('WorkItemID', sql.Int, req.params.workId)
             .query(`
-                SELECT e.EmployeeID, e.Name, COUNT(wa.AssignmentID) as ActiveTasks
+                SELECT e.EmployeeID, e.Name, COUNT(DISTINCT CASE WHEN wi.Status IS NOT NULL AND wi.Status != 'Completed' THEN wa.AssignmentID END) as ActiveTasks
                 FROM Employee e
                 LEFT JOIN WorkAssignment wa ON e.EmployeeID = wa.EmployeeID AND wa.AssignmentStatus IN ('Assigned', 'Active')
+                LEFT JOIN WorkItem wi ON wa.WorkItemID = wi.WorkItemID
                 WHERE e.Role NOT LIKE '%Manager%'
                   AND e.EmployeeID NOT IN (SELECT EmployeeID FROM WorkAssignment WHERE WorkItemID = @WorkItemID AND AssignmentStatus IN ('Assigned', 'Active'))
                 GROUP BY e.EmployeeID, e.Name

@@ -20,6 +20,7 @@ interface ActiveTask {
   AssignmentName: string;
   Description: string;
   Status: string;
+  IsHandoverPending?: number;
 }
 
 export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProps> = ({
@@ -115,8 +116,8 @@ export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProp
 
       setSuccessMessage(`Successfully suggested handover for "${selectedTask.TaskTitle || selectedTask.AssignmentName}"`);
       
-      // Remove the task from local list
-      setTasks(prev => prev.filter(t => t.AssignmentID !== selectedTask.AssignmentID));
+      // Update local task state to set IsHandoverPending = 1 instead of removing it
+      setTasks(prev => prev.map(t => t.AssignmentID === selectedTask.AssignmentID ? { ...t, IsHandoverPending: 1 } : t));
       setSelectedEditTask(null);
       setReason('');
     } catch (err: any) {
@@ -188,6 +189,7 @@ export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProp
                 {tasks.map(task => {
                   const isSuggestingThis = selectedTask?.AssignmentID === task.AssignmentID;
                   const isExpanded = expandedTaskId === task.AssignmentID;
+                  const isPending = task.IsHandoverPending === 1;
                   
                   return (
                     <div 
@@ -195,7 +197,9 @@ export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProp
                       className={`border rounded-xl transition-all duration-200 ${
                         isSuggestingThis 
                           ? 'border-sky-500 bg-sky-50/20 ring-1 ring-sky-500/20' 
-                          : 'border-slate-200 hover:border-slate-300 bg-white shadow-sm'
+                          : isPending
+                            ? 'border-slate-200 bg-slate-50/50 opacity-80'
+                            : 'border-slate-200 hover:border-slate-300 bg-white shadow-sm'
                       }`}
                     >
                       {/* Card Header (Clickable for toggle) */}
@@ -226,9 +230,10 @@ export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProp
                                 e.stopPropagation();
                                 handleSuggestClick(task);
                               }}
-                              className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200/50 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-[0.98]"
+                              disabled={isPending}
+                              className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200/50 rounded-lg text-xs font-bold transition-all flex items-center gap-1 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <ArrowRightLeft size={11} /> Suggest Handover
+                              <ArrowRightLeft size={11} /> {isPending ? 'Handover Pending' : 'Suggest Handover'}
                             </button>
                           )}
                           <div className="text-slate-400 p-1">
@@ -263,6 +268,12 @@ export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProp
                               <span className="text-slate-400 font-semibold block">Assignment Status</span>
                               <span className="text-slate-800 font-bold block mt-0.5">{task.Status || 'Assigned'}</span>
                             </div>
+                            {isPending && (
+                              <div>
+                                <span className="text-amber-600 font-semibold block">Handover Status</span>
+                                <span className="text-amber-700 font-bold block mt-0.5 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 w-fit text-[10px]">Pending Transfer</span>
+                              </div>
+                            )}
                             <div>
                               <span className="text-slate-400 font-semibold block">Assignment ID</span>
                               <span className="text-slate-800 font-bold block mt-0.5">#{task.AssignmentID}</span>
@@ -298,7 +309,7 @@ export const EmployeeTasksHandoverModal: React.FC<EmployeeTasksHandoverModalProp
                               rows={2}
                               value={reason}
                               onChange={e => setReason(e.target.value)}
-                              placeholder="Describe reason for suggesting this shift handover..."
+                              placeholder="Reason (e.g. Shift transfer due to hospital emergency at Cho Ray)..."
                               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs resize-none focus:outline-none focus:ring-2 focus:ring-sky-500"
                             />
                           </div>

@@ -335,7 +335,7 @@ const BottleneckDashboard: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Search Staff Name" 
+                  placeholder="Search staff (e.g. Nguyen Van A)..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm"
@@ -455,25 +455,32 @@ const BottleneckDashboard: React.FC = () => {
                   if (staffTasks.length === 0) {
                     return <div className="text-center text-slate-500 py-8">No active tasks found for this employee.</div>;
                   }
-                  return staffTasks.map(task => (
-                    <div key={task.WorkItemID} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col gap-3">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100">T-{task.WorkItemID}</span>
-                          <span className={`px-2.5 py-1 text-xs font-semibold rounded-md border ${
-                            task.Status === 'In Progress' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}>{task.Status || 'Pending'}</span>
-                        </div>
-                        {task.DueDate && (
-                          <div className={`text-xs font-semibold ${new Date(task.DueDate) < new Date() ? 'text-rose-600' : 'text-slate-500'}`}>
-                            Due: {new Date(task.DueDate).toLocaleString()}
+                  return staffTasks.map(task => {
+                    const myAssignee = task.Assignees.find((a: any) => a.EmployeeID == viewStaffTasks.EmployeeID);
+                    const isPending = myAssignee?.IsHandoverPending === 1;
+                    return (
+                      <div key={task.WorkItemID} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100">T-{task.WorkItemID}</span>
+                            <span className={`px-2.5 py-1 text-xs font-semibold rounded-md border ${
+                              task.Status === 'In Progress' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}>{task.Status || 'Pending'}</span>
+                            {isPending && (
+                              <span className="px-2.5 py-1 text-xs font-bold rounded bg-amber-100 text-amber-700 border border-amber-200">Handover Pending</span>
+                            )}
                           </div>
-                        )}
+                          {task.DueDate && (
+                            <div className={`text-xs font-semibold ${new Date(task.DueDate) < new Date() ? 'text-rose-600' : 'text-slate-500'}`}>
+                              Due: {new Date(task.DueDate).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="text-slate-900 font-semibold text-base">{task.Title}</h4>
+                        <p className="text-sm text-slate-600">{task.Description}</p>
                       </div>
-                      <h4 className="text-slate-900 font-semibold text-base">{task.Title}</h4>
-                      <p className="text-sm text-slate-600">{task.Description}</p>
-                    </div>
-                  ));
+                    );
+                  });
                 })()}
               </div>
             </div>

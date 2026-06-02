@@ -38,7 +38,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onLogout }) => {
           </div>
           <input 
             type="text" 
-            placeholder="Search tasks, patients, or staff..." 
+            placeholder="Search tasks, patients (e.g. Nguyen Van A)..." 
             className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 hover:border-sky-300 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 sm:text-sm transition-all shadow-sm"
           />
         </div>

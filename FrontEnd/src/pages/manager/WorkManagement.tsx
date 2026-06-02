@@ -420,7 +420,7 @@ const WorkManagement: React.FC = () => {
                                   <div className="flex gap-2 max-w-xl">
                                     <input
                                       type="text"
-                                      placeholder="Create a new subtask inline..."
+                                      placeholder="Create subtask (e.g. Check vitals for patient Nguyen Van A)..."
                                       value={newSubtaskTitles[task.WorkItemID] || ''}
                                       onChange={(e) => setNewSubtaskTitles(prev => ({ ...prev, [task.WorkItemID]: e.target.value }))}
                                       className="flex-1 px-3.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500"

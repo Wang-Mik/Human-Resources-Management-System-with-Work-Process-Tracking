@@ -36,8 +36,12 @@ const TaskBoard: React.FC = () => {
       const user = JSON.parse(userStr);
       const data = await api.get("/works");
       setTasks(data.filter((t: any) => {
+        const userAssignment = Array.isArray(t.Assignees) && t.Assignees.find((a: any) => a.EmployeeID === user.EmployeeID);
+        if (userAssignment && userAssignment.IsHandoverPending === 1) {
+          return false;
+        }
         const matchesName = t.AssigneeName === user.Name;
-        const matchesAssigneesList = Array.isArray(t.Assignees) && t.Assignees.some((a: any) => a.EmployeeID === user.EmployeeID);
+        const matchesAssigneesList = !!userAssignment;
         return matchesName || matchesAssigneesList;
       }));
     } catch (err) {

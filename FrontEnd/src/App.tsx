@@ -27,7 +27,7 @@ const App: React.FC = () => {
     }
     return null;
   });
-  
+
   const [currentPage, setCurrentPage] = useState<string>(() => {
     const role = userRole;
     if (role === 'manager') return 'Dashboard';
@@ -50,6 +50,15 @@ const App: React.FC = () => {
     setUserRole(null);
   };
 
+  React.useEffect(() => {
+    if (!userRole) {
+      document.title = "HMS Portal - Login";
+    } else {
+      const readablePageName = currentPage.replace(/([A-Z])/g, ' $1').trim();
+      document.title = `HMS Portal - ${readablePageName}`;
+    }
+  }, [currentPage, userRole]);
+
   if (!userRole) {
     return <Login onLogin={handleLogin} />;
   }
@@ -60,7 +69,7 @@ const App: React.FC = () => {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar onLogout={handleLogout} />
-        
+
         {userRole === 'manager' && (
           <>
             {currentPage === 'Dashboard' && <Dashboard onNavigate={setCurrentPage} />}
@@ -80,6 +89,7 @@ const App: React.FC = () => {
           </>
         )}
       </div>
+
     </div>
   );
 };

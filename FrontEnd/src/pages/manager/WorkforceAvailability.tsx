@@ -7,8 +7,12 @@ const WorkforceAvailability: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
   const [workloadData, setWorkloadData] = useState<any[]>([]);
 
-  useEffect(() => {
+  const fetchWorkload = () => {
     getBottleneckWorkload().then(setWorkloadData).catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchWorkload();
   }, []);
 
   const totalStaff = workloadData.filter(s => s.IsClockedIn === 1).length;
@@ -145,7 +149,10 @@ const WorkforceAvailability: React.FC = () => {
       
       <EmployeeTasksHandoverModal
         isOpen={!!selectedEmployee}
-        onClose={() => setSelectedEmployee(null)}
+        onClose={() => {
+          setSelectedEmployee(null);
+          fetchWorkload();
+        }}
         employee={selectedEmployee}
       />
     </div>

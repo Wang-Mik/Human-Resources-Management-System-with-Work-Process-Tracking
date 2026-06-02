@@ -188,7 +188,7 @@ export const CreateWorkAssignmentModal: React.FC<CreateWorkAssignmentModalProps>
               <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Assignment Name <span className="text-rose-500">*</span></label>
               <input
                 type="text"
-                placeholder="e.g. ICU Night Shift Allocation"
+                placeholder="e.g. ICU Night Shift - Bach Mai Hospital"
                 value={assignmentName}
                 onChange={e => setAssignmentName(e.target.value)}
                 className="px-3.5 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
@@ -208,7 +208,7 @@ export const CreateWorkAssignmentModal: React.FC<CreateWorkAssignmentModalProps>
 
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Description</label>
-              <textarea rows={2} placeholder="Specific shift instructions or assignment scope..."
+              <textarea rows={2} placeholder="e.g. Assist patients, update vitals logs in Ward 4..."
                 value={description} onChange={e => setDescription(e.target.value)}
                 className="px-3.5 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none" />
             </div>
@@ -245,7 +245,7 @@ export const CreateWorkAssignmentModal: React.FC<CreateWorkAssignmentModalProps>
                 {/* Task filters row */}
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <input type="text" placeholder="Search tasks…" value={taskSearch}
+                    <input type="text" placeholder="Search tasks (e.g. Blood pressure check)…" value={taskSearch}
                       onChange={e => setTaskSearch(e.target.value)}
                       className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-sky-500" />
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
@@ -301,7 +301,7 @@ export const CreateWorkAssignmentModal: React.FC<CreateWorkAssignmentModalProps>
                 {/* Employee filters row */}
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <input type="text" placeholder="Search staff…" value={employeeSearch}
+                    <input type="text" placeholder="Search staff (e.g. Nguyen Van A)…" value={employeeSearch}
                       onChange={e => setEmployeeSearch(e.target.value)}
                       className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-sky-500" />
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />

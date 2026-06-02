@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, CheckCircle2, AlertCircle, Hourglass, ArrowRightLeft, MapPin, LogIn, LogOut, Loader2, Lock } from 'lucide-react';
 import InitiateHandoverModal from '../../components/common/InitiateHandoverModal';
+import { TaskDetailModal } from '../../components/common/TaskDetailModal';
 import api from '../../services/api';
 
 interface Employee {
@@ -18,6 +19,7 @@ interface WorkItem {
   Status: string;
   DueDate: string;
   AssigneeName?: string;
+  SubTasks?: { SubTaskID: number; Title: string; Status: string }[];
 }
 
 interface Attendance {
@@ -44,6 +46,7 @@ const AVAILABILITY_OPTIONS = [
 
 const Workspace: React.FC = () => {
   const [isHandoverModalOpen, setIsHandoverModalOpen] = useState(false);
+  const [detailTaskId, setDetailTaskId] = useState<number | null>(null);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [tasks, setTasks] = useState<WorkItem[]>([]);
   const [attendance, setAttendance] = useState<Attendance | null>(null);
@@ -67,8 +70,12 @@ const Workspace: React.FC = () => {
     try {
       const data: any[] = await api.get('/works');
       setTasks(data.filter(t => {
+        const userAssignment = Array.isArray(t.Assignees) && t.Assignees.find((a: any) => a.EmployeeID === emp.EmployeeID);
+        if (userAssignment && userAssignment.IsHandoverPending === 1) {
+          return false;
+        }
         const matchesName = t.AssigneeName === emp.Name;
-        const matchesAssigneesList = Array.isArray(t.Assignees) && t.Assignees.some((a: any) => a.EmployeeID === emp.EmployeeID);
+        const matchesAssigneesList = !!userAssignment;
         return matchesName || matchesAssigneesList;
       }));
     } catch {
@@ -308,8 +315,12 @@ const Workspace: React.FC = () => {
                 </div>
               ) : (
                 todayTasks.map(task => (
-                  <div key={task.WorkItemID} className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                    <div className="flex justify-between items-center">
+                  <div 
+                    key={task.WorkItemID} 
+                    onClick={() => setDetailTaskId(task.WorkItemID)}
+                    className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center" onClick={(e) => e.stopPropagation()}>
                       <div className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 ${task.Status === 'In Progress' ? 'bg-blue-50 text-sky-700' : 'bg-slate-100 text-slate-700'}`}>
                         {task.Status === 'In Progress'
                           ? <CheckCircle2 size={14} className="text-sky-600" />
@@ -334,9 +345,14 @@ const Workspace: React.FC = () => {
                         <MapPin size={16} />
                         <span className="text-sm font-medium font-['Inter']">{task.Description}</span>
                       </div>
+                      {task.SubTasks && task.SubTasks.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                          <span>{task.SubTasks.filter(s => s.Status === 'Completed').length} of {task.SubTasks.length} subtasks completed</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="pt-4 mt-auto relative">
+                    <div className="pt-4 mt-auto relative" onClick={(e) => e.stopPropagation()}>
                       {task.Status === 'In Progress' ? (
                         <button
                           onClick={() => handleTaskAction(task, 'Ready for Review')}
@@ -425,6 +441,12 @@ const Workspace: React.FC = () => {
       <InitiateHandoverModal
         isOpen={isHandoverModalOpen}
         onClose={() => setIsHandoverModalOpen(false)}
+      />
+      <TaskDetailModal
+        isOpen={detailTaskId !== null}
+        onClose={() => { setDetailTaskId(null); if (employee) fetchTasks(employee); }}
+        taskId={detailTaskId}
+        onSuccess={() => { if (employee) fetchTasks(employee); }}
       />
     </div>
   );

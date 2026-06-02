@@ -65,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow shadow-sm"
-                placeholder="Enter your email"
+                placeholder="Enter email (e.g. binh.nguyen@hospital.vn)"
               />
             </div>
           </div>

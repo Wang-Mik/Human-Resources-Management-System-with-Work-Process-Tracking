@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole = 'manager', currentP
 
         const empData = await api.get('/employees');
         const user = empData.find((e: any) => e.Email === loggedInUser.Email || e.EmployeeID === loggedInUser.EmployeeID);
-        
+
         if (user) {
           setUserName(user.Name);
           setUserTitle(user.Position || user.Role);

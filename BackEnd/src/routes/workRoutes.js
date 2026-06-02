@@ -152,7 +152,12 @@ router.get('/assignments', async (req, res) => {
                 wa.Description,
                 wa.Status,
                 wa.WorkAssignmentGroup,
-                wa.WorkAssignmentGroup AS GroupID
+                wa.WorkAssignmentGroup AS GroupID,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM HandOverItem hoi
+                    JOIN HandOverRecord hor ON hoi.HandOverID = hor.HandOverID
+                    WHERE hoi.AssignmentID = wa.AssignmentID AND hor.Status IN ('Initiated', 'Pending', 'Submitted')
+                ) THEN 1 ELSE 0 END AS IsHandoverPending
             FROM WorkAssignment wa
             JOIN Employee e ON wa.EmployeeID = e.EmployeeID
             JOIN WorkItem wi ON wa.WorkItemID = wi.WorkItemID
@@ -405,7 +410,12 @@ router.get('/', async (req, res) => {
         
         // Get all assignment entries
         const assignmentsResult = await pool.request().query(`
-            SELECT wa.AssignmentID, wa.WorkItemID, e.EmployeeID, e.Name, e.Email, e.Role, wa.RoleInWork, wa.AssignmentName, wa.Description, wa.Status, wa.AssignedAt
+            SELECT wa.AssignmentID, wa.WorkItemID, e.EmployeeID, e.Name, e.Email, e.Role, wa.RoleInWork, wa.AssignmentName, wa.Description, wa.Status, wa.AssignedAt,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM HandOverItem hoi
+                    JOIN HandOverRecord hor ON hoi.HandOverID = hor.HandOverID
+                    WHERE hoi.AssignmentID = wa.AssignmentID AND hor.Status IN ('Initiated', 'Pending', 'Submitted')
+                ) THEN 1 ELSE 0 END AS IsHandoverPending
             FROM WorkAssignment wa
             JOIN Employee e ON wa.EmployeeID = e.EmployeeID
             WHERE wa.AssignmentStatus IS NOT NULL
@@ -433,7 +443,8 @@ router.get('/', async (req, res) => {
                     AssignmentName: a.AssignmentName,
                     Description: a.Description,
                     Status: a.Status,
-                    AssignedAt: a.AssignedAt
+                    AssignedAt: a.AssignedAt,
+                    IsHandoverPending: a.IsHandoverPending
                 })),
                 AssigneeName: workAssignments.map(a => a.Name).join(', ') || 'Unassigned',
                 SubTasks: workSubtasks

@@ -215,7 +215,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     rows={3}
                     value={editDocument}
                     onChange={(e) => setEditDocument(e.target.value)}
-                    placeholder="Enter guidelines, instructions, or URLs..."
+                    placeholder="Enter guidelines (e.g. Follow Ministry of Health clinical protocols)..."
                     className="px-3.5 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
                   />
                 ) : (
@@ -289,17 +289,19 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Create a new subtask..."
+                  placeholder="Create a subtask (e.g. Check vitals for patient Nguyen Van A)..."
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500"
+                  disabled={!isManager && !isClockedIn}
+                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 disabled:bg-slate-50"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleAddSubtask();
                   }}
                 />
                 <button
                   onClick={handleAddSubtask}
-                  className="px-3.5 py-1.5 bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                  disabled={!isManager && !isClockedIn}
+                  className="px-3.5 py-1.5 bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:bg-slate-400 disabled:hover:bg-slate-400"
                 >
                   <Plus size={14} /> Add
                 </button>
@@ -321,7 +323,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           {/* Checkbox */}
                           <div
                             onClick={() => handleToggleSubtask(sub.SubTaskID, sub.Status)}
-                            className={`w-4.5 h-4.5 rounded border flex items-center justify-center transition-all cursor-pointer ${
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-all cursor-pointer ${
                               sub.Status === 'Completed'
                                 ? 'bg-green-600 border-green-600 text-white'
                                 : 'border-slate-300 bg-white hover:border-slate-400'
@@ -370,25 +372,27 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               </button>
                             </>
                           ) : (
-                            <>
-                              <button
-                                onClick={() => {
-                                  setEditingSubtaskId(sub.SubTaskID);
-                                  setEditingSubtaskTitle(sub.Title);
-                                }}
-                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                                title="Edit subtask title"
-                              >
-                                <Edit2 size={13} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteSubtask(sub.SubTaskID)}
-                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors"
-                                title="Delete subtask"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </>
+                            (isManager || isClockedIn) && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingSubtaskId(sub.SubTaskID);
+                                    setEditingSubtaskTitle(sub.Title);
+                                  }}
+                                  className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                                  title="Edit subtask title"
+                                >
+                                  <Edit2 size={13} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSubtask(sub.SubTaskID)}
+                                  className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors"
+                                  title="Delete subtask"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </>
+                            )
                           )}
                         </div>
                       </div>

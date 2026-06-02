@@ -119,7 +119,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({ isOpen, onClos
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-slate-700">Task Title <span className="text-rose-500">*</span></label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Patient Vitals Check"
+              placeholder="e.g. Check patient vitals (Nguyen Van A)"
               className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors" />
           </div>
 
@@ -127,7 +127,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({ isOpen, onClos
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-slate-700">Description</label>
             <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)}
-              placeholder="Task details and context..."
+              placeholder="e.g. Monitor blood pressure, blood test list..."
               className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors resize-none" />
           </div>
 
@@ -137,7 +137,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({ isOpen, onClos
               <FileText size={15} className="text-slate-500" /> Document / Resource Link
             </label>
             <textarea rows={2} value={document} onChange={e => setDocument(e.target.value)}
-              placeholder="URLs, clinical guidelines, or reference notes..."
+              placeholder="e.g. Refer to Ministry of Health guideline document..."
               className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors resize-none" />
           </div>
 
