@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, ArrowRight, Filter } from 'lucide-react';
 import api from '../../services/api';
 
@@ -52,26 +52,39 @@ const HandoverReview: React.FC = () => {
     }
   }, [activeTab]);
 
-  // Filter + sort
-  const filteredHandovers = handovers
-    .filter(h => {
-      if (statusFilter === 'All') return true;
-      if (statusFilter === 'Pending Review') return h.Status === 'Pending' || h.Status === 'Initiated' || h.Status === 'Submitted';
-      return h.Status === statusFilter;
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.CreatedAt).getTime();
-      const dateB = new Date(b.CreatedAt).getTime();
-      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
-    });
+  const filteredHandovers = useMemo(() => {
+    return handovers
+      .filter((h: HandoverRecord) => {
+        if (statusFilter === 'All') return true;
+        if (statusFilter === 'Pending Review') return h.Status === 'Pending' || h.Status === 'Initiated' || h.Status === 'Submitted';
+        return h.Status === statusFilter;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.CreatedAt).getTime();
+        const dateB = new Date(b.CreatedAt).getTime();
+        return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+      });
+  }, [handovers, statusFilter, sortBy]);
 
-  const activeHandover = handovers.find(h => h.HandOverID === activeTab);
+  useEffect(() => {
+    if (filteredHandovers.length > 0) {
+      if (activeTab === null || !filteredHandovers.some((h: HandoverRecord) => h.HandOverID === activeTab)) {
+        setActiveTab(filteredHandovers[0].HandOverID);
+      }
+    } else {
+      setActiveTab(null);
+    }
+  }, [filteredHandovers, activeTab]);
+
+  const activeHandover = useMemo(() => {
+    return handovers.find((h: HandoverRecord) => h.HandOverID === activeTab);
+  }, [handovers, activeTab]);
 
   const updateStatus = async (status: string) => {
     if (!activeTab) return;
     try {
       await api.put(`/handovers/${activeTab}/review`, { status });
-      setHandovers(handovers.map(h => h.HandOverID === activeTab ? { ...h, Status: status } : h));
+      setHandovers(handovers.map((h: HandoverRecord) => h.HandOverID === activeTab ? { ...h, Status: status } : h));
     } catch (err) {
       console.error(err);
     }
@@ -138,7 +151,7 @@ const HandoverReview: React.FC = () => {
           ) : filteredHandovers.length === 0 ? (
              <div className="p-5 text-slate-500 text-sm">No handovers match your filter.</div>
           ) : (
-            filteredHandovers.map(ho => (
+            filteredHandovers.map((ho: HandoverRecord) => (
               <button 
                 key={ho.HandOverID}
                 className={`w-full text-left p-5 flex flex-col gap-2.5 transition-colors focus:outline-none border-r-4 ${activeTab === ho.HandOverID ? 'bg-sky-50 border-sky-700' : 'bg-white border-transparent border-b border-slate-100 hover:bg-slate-50'}`}
@@ -226,10 +239,10 @@ const HandoverReview: React.FC = () => {
                     {/* From */}
                     <div className="flex items-center gap-3 flex-1">
                       <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-700 font-semibold shrink-0">
-                        {activeHandover.FromName.charAt(0)}
+                        {(activeHandover.FromName || 'Outgoing').charAt(0)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900 uppercase">{activeHandover.FromName}</span>
+                        <span className="text-sm font-bold text-slate-900 uppercase">{activeHandover.FromName || 'Unassigned'}</span>
                         <span className="text-xs text-slate-500 font-medium mt-0.5">Outgoing Shift</span>
                       </div>
                     </div>
@@ -242,10 +255,10 @@ const HandoverReview: React.FC = () => {
                     {/* To */}
                     <div className="flex items-center gap-3 flex-1">
                       <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-700 font-semibold shrink-0">
-                        {activeHandover.ToName.charAt(0)}
+                        {(activeHandover.ToName || 'Incoming').charAt(0)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900">{activeHandover.ToName}</span>
+                        <span className="text-sm font-bold text-slate-900">{activeHandover.ToName || 'Unassigned'}</span>
                         <span className="text-xs text-slate-500 font-medium mt-0.5">Incoming Shift</span>
                       </div>
                     </div>

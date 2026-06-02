@@ -3,6 +3,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
 import Dashboard from './pages/manager/Dashboard';
 import WorkManagement from './pages/manager/WorkManagement';
+import WorkAssignment from './pages/manager/WorkAssignment';
 import HandoverReview from './pages/manager/HandoverReview';
 import BottleneckDashboard from './pages/manager/BottleneckDashboard';
 import WorkforceAvailability from './pages/manager/WorkforceAvailability';
@@ -14,7 +15,7 @@ import Login from './pages/auth/Login';
 const App: React.FC = () => {
   const [userRole, setUserRole] = useState<'manager' | 'employee' | null>(() => {
     try {
-      const user = localStorage.getItem('user');
+      const user = sessionStorage.getItem('user');
       if (user) {
         const parsed = JSON.parse(user);
         if (parsed && typeof parsed.Role === 'string') {
@@ -22,30 +23,30 @@ const App: React.FC = () => {
         }
       }
     } catch (e) {
-      console.error('Error parsing user from localStorage', e);
+      console.error('Error parsing user from sessionStorage', e);
     }
     return null;
   });
   
   const [currentPage, setCurrentPage] = useState<string>(() => {
     const role = userRole;
-    if (role === 'manager') return 'BottleneckDashboard';
-    if (role === 'employee') return 'TaskBoard';
+    if (role === 'manager') return 'Dashboard';
+    if (role === 'employee') return 'Workspace';
     return 'Dashboard';
   });
 
   const handleLogin = (role: 'manager' | 'employee') => {
     setUserRole(role);
     if (role === 'manager') {
-      setCurrentPage('BottleneckDashboard');
+      setCurrentPage('Dashboard');
     } else {
-      setCurrentPage('TaskBoard');
+      setCurrentPage('Workspace');
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     setUserRole(null);
   };
 
@@ -64,6 +65,7 @@ const App: React.FC = () => {
           <>
             {currentPage === 'Dashboard' && <Dashboard onNavigate={setCurrentPage} />}
             {currentPage === 'WorkManagement' && <WorkManagement />}
+            {currentPage === 'WorkAssignment' && <WorkAssignment />}
             {currentPage === 'HandoverReview' && <HandoverReview />}
             {currentPage === 'BottleneckDashboard' && <BottleneckDashboard />}
             {currentPage === 'WorkforceAvailability' && <WorkforceAvailability />}

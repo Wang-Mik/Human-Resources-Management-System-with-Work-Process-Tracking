@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { AssignTaskModal } from '../../components/common/AssignTaskModal';
+import { EmployeeTasksHandoverModal } from '../../components/common/EmployeeTasksHandoverModal';
 import { getBottleneckWorkload } from '../../services/managerService';
 
 const WorkforceAvailability: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
   const [workloadData, setWorkloadData] = useState<any[]>([]);
 
   useEffect(() => {
     getBottleneckWorkload().then(setWorkloadData).catch(console.error);
   }, []);
 
-  const totalStaff = workloadData.length;
-  const available = workloadData.filter(s => s.ActiveTasks < 5).length;
-  const busy = workloadData.filter(s => s.ActiveTasks >= 5).length;
+  const totalStaff = workloadData.filter(s => s.IsClockedIn === 1).length;
+  const available = workloadData.filter(s => s.IsClockedIn === 1 && s.ActiveTasks < 5).length;
+  const busy = workloadData.filter(s => s.IsClockedIn === 1 && s.ActiveTasks >= 5).length;
+  const offline = workloadData.filter(s => s.IsClockedIn === 0).length;
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-hidden">
       <div className="w-full flex-1 flex flex-col overflow-y-auto bg-white p-6 md:p-8">
@@ -63,7 +64,7 @@ const WorkforceAvailability: React.FC = () => {
           <div className="p-6 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col gap-2 relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-500"></div>
             <span className="text-slate-600 text-sm font-medium tracking-tight">Offline / Break</span>
-            <span className="text-slate-500 text-4xl font-bold">0</span>
+            <span className="text-slate-500 text-4xl font-bold">{offline}</span>
           </div>
         </div>
 
@@ -85,9 +86,15 @@ const WorkforceAvailability: React.FC = () => {
                   <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-slate-500">Loading staff data...</td></tr>
                 ) : (
                   workloadData.map((staff) => {
+                    const isClockedIn = staff.IsClockedIn === 1;
                     const isBusy = staff.ActiveTasks >= 5;
-                    const statusColor = isBusy ? 'amber' : 'emerald';
-                    const statusText = isBusy ? 'Busy' : 'Available';
+                    
+                    let statusColor = 'slate';
+                    let statusText = 'Offline';
+                    if (isClockedIn) {
+                      statusColor = isBusy ? 'amber' : 'emerald';
+                      statusText = isBusy ? 'Busy' : 'Available';
+                    }
                     
                     return (
                       <tr key={staff.EmployeeID} className="hover:bg-slate-50 transition-colors">
@@ -119,10 +126,10 @@ const WorkforceAvailability: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button 
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setSelectedEmployee(staff)}
                             className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1"
                           >
-                            Assign Task
+                            See Tasks
                           </button>
                         </td>
                       </tr>
@@ -136,9 +143,10 @@ const WorkforceAvailability: React.FC = () => {
         </div>
       </div>
       
-      <AssignTaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      <EmployeeTasksHandoverModal
+        isOpen={!!selectedEmployee}
+        onClose={() => setSelectedEmployee(null)}
+        employee={selectedEmployee}
       />
     </div>
   );

@@ -5,11 +5,7 @@ const { sql, poolPromise } = require('../config/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_123';
 
-/*
- * MODULE: AUTHENTICATION
- */
-
-// Đăng nhập
+// Log in endpoint
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -23,8 +19,7 @@ router.post('/login', async (req, res) => {
         }
         
         const user = result.recordset[0];
-        // TODO: In a real app, compare hashed password using bcrypt.
-        // For simplicity, we are assuming plain text match here or bypassing.
+
         
         const token = jwt.sign(
             { id: user.EmployeeID, email: user.Email, role: user.Role, name: user.Name },

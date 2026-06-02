@@ -6,7 +6,8 @@ import {
   Users,
   Settings,
   User,
-  PieChart
+  PieChart,
+  UserCheck
 } from 'lucide-react';
 import api from '../../services/api';
 
@@ -23,10 +24,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole = 'manager', currentP
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const userStr = sessionStorage.getItem('user');
+        if (!userStr) return;
+        const loggedInUser = JSON.parse(userStr);
+
+        // Pre-set from sessionStorage to avoid UI flicker
+        setUserName(loggedInUser.Name || '');
+        setUserTitle(loggedInUser.Position || loggedInUser.Role || '');
+
         const empData = await api.get('/employees');
-        // Simple mock auth resolution based on role
-        const targetEmail = userRole === 'manager' ? 'khoa@hospital.com' : 'minh@hospital.com';
-        const user = empData.find((e: any) => e.Email === targetEmail);
+        const user = empData.find((e: any) => e.Email === loggedInUser.Email || e.EmployeeID === loggedInUser.EmployeeID);
         
         if (user) {
           setUserName(user.Name);
@@ -63,6 +70,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole = 'manager', currentP
             >
               <Briefcase size={20} />
               <span className="text-sm font-medium">Work Management</span>
+            </a>
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); onNavigate?.('WorkAssignment'); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-l-lg transition-colors ${currentPage === 'WorkAssignment' ? 'bg-blue-100/30 border-r-4 border-sky-700 text-sky-700' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              <UserCheck size={20} />
+              <span className="text-sm font-medium">Work Assignment</span>
             </a>
             <a
               href="#"

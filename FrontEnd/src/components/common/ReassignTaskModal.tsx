@@ -41,7 +41,7 @@ const ReassignTaskModal: React.FC<ReassignTaskModalProps> = ({ isOpen, onClose, 
     if (!task || !selectedEmployee) return;
     setSubmitting(true);
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       const managerId = userStr ? JSON.parse(userStr).EmployeeID : 1;
       await reassignWork({
         workItemId: task.WorkItemID,

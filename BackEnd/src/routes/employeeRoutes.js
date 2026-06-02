@@ -30,6 +30,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// Add a new employee to the database (Not used in the frontend UI yet)
 router.post('/', async (req, res) => {
     try {
         const { name, email, password, role, department, position, status } = req.body;

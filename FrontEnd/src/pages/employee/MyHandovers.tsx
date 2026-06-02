@@ -34,7 +34,7 @@ const MyHandovers: React.FC = () => {
 
   const getUser = () => {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       if (userStr) return JSON.parse(userStr);
     } catch (e) { /* ignore */ }
     return null;

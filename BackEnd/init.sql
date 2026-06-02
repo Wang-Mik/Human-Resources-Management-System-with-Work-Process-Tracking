@@ -40,6 +40,7 @@ CREATE TABLE WorkItem (
     WorkItemID INT IDENTITY(1,1) PRIMARY KEY,
     Title NVARCHAR(255),
     Description NVARCHAR(MAX),
+    Document NVARCHAR(MAX),
     WorkType NVARCHAR(50),
     Status NVARCHAR(50),
     CreatedAt DATETIME,
@@ -65,7 +66,11 @@ CREATE TABLE WorkAssignment (
     AssignedAt DATETIME,
     UnAssignedAt DATETIME,
     AssignmentStatus NVARCHAR(50),
-    RoleInWork NVARCHAR(50)
+    RoleInWork NVARCHAR(50),
+    AssignmentName NVARCHAR(255),
+    Description NVARCHAR(MAX),
+    Status NVARCHAR(50),
+    WorkAssignmentGroup NVARCHAR(100)
 );
 
 -- HandOverRecord

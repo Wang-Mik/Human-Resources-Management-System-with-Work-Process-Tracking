@@ -15,9 +15,13 @@ router.get('/workload', async (req, res) => {
                 e.EmployeeID, 
                 e.Name, 
                 e.Department, 
-                COUNT(wa.AssignmentID) as ActiveTasks 
+                COUNT(DISTINCT wa.AssignmentID) as ActiveTasks,
+                MAX(CASE WHEN att.AttendanceID IS NOT NULL THEN 1 ELSE 0 END) as IsClockedIn
             FROM Employee e
             LEFT JOIN WorkAssignment wa ON e.EmployeeID = wa.EmployeeID AND wa.AssignmentStatus IN ('Assigned', 'Active')
+            LEFT JOIN Attendance att ON e.EmployeeID = att.EmployeeID 
+                AND att.WorkingDate = CAST(GETDATE() AS DATE) 
+                AND att.CheckOutTime IS NULL
             GROUP BY e.EmployeeID, e.Name, e.Department
         `);
         res.json(result.recordset);
@@ -35,6 +39,8 @@ router.get('/detect', async (req, res) => {
             SELECT * FROM WorkItem 
             WHERE DueDate < GETDATE() AND Status != 'Completed'
         `);
+        
+        // Find staff who have more than 5 tasks going on
         const overloadedStaff = await pool.request().query(`
             SELECT 
                 e.EmployeeID, e.Name, COUNT(wa.AssignmentID) as TaskCount
@@ -64,7 +70,8 @@ router.get('/suggestions/:workId', async (req, res) => {
                 SELECT e.EmployeeID, e.Name, COUNT(wa.AssignmentID) as ActiveTasks
                 FROM Employee e
                 LEFT JOIN WorkAssignment wa ON e.EmployeeID = wa.EmployeeID AND wa.AssignmentStatus IN ('Assigned', 'Active')
-                WHERE e.EmployeeID NOT IN (SELECT EmployeeID FROM WorkAssignment WHERE WorkItemID = @WorkItemID AND AssignmentStatus IN ('Assigned', 'Active'))
+                WHERE e.Role NOT LIKE '%Manager%'
+                  AND e.EmployeeID NOT IN (SELECT EmployeeID FROM WorkAssignment WHERE WorkItemID = @WorkItemID AND AssignmentStatus IN ('Assigned', 'Active'))
                 GROUP BY e.EmployeeID, e.Name
                 ORDER BY ActiveTasks ASC
             `);

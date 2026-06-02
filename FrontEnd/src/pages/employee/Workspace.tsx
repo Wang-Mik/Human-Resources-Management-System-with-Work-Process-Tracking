@@ -65,8 +65,12 @@ const Workspace: React.FC = () => {
 
   const fetchTasks = useCallback(async (emp: Employee) => {
     try {
-      const data: WorkItem[] = await api.get('/works');
-      setTasks(data.filter(t => t.AssigneeName === emp.Name));
+      const data: any[] = await api.get('/works');
+      setTasks(data.filter(t => {
+        const matchesName = t.AssigneeName === emp.Name;
+        const matchesAssigneesList = Array.isArray(t.Assignees) && t.Assignees.some((a: any) => a.EmployeeID === emp.EmployeeID);
+        return matchesName || matchesAssigneesList;
+      }));
     } catch {
       setTasks([]);
     }
@@ -82,7 +86,7 @@ const Workspace: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       if (!userStr) { setLoading(false); return; }
       const emp: Employee = JSON.parse(userStr);
       setEmployee(emp);
@@ -335,15 +339,23 @@ const Workspace: React.FC = () => {
                     <div className="pt-4 mt-auto relative">
                       {task.Status === 'In Progress' ? (
                         <button
-                          onClick={() => handleTaskAction(task, 'Completed')}
+                          onClick={() => handleTaskAction(task, 'Ready for Review')}
                           disabled={!isClockedIn || taskLoading === task.WorkItemID}
                           title={!isClockedIn ? 'Clock in to update tasks' : undefined}
-                          className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 transition-all text-white rounded-xl text-sm font-semibold font-['Inter'] shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 transition-all text-white rounded-xl text-sm font-semibold font-['Inter'] shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {taskLoading === task.WorkItemID
                             ? <Loader2 size={16} className="animate-spin" />
                             : !isClockedIn ? <Lock size={16} /> : <CheckCircle2 size={16} />}
-                          Mark as Complete
+                          Submit for Review
+                        </button>
+                      ) : task.Status === 'Ready for Review' ? (
+                        <button
+                          disabled
+                          className="w-full py-2.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-sm font-semibold font-['Inter'] flex items-center justify-center gap-2 cursor-not-allowed"
+                        >
+                          <Hourglass size={16} className="text-slate-450 animate-pulse" />
+                          Waiting for Review
                         </button>
                       ) : (
                         <button

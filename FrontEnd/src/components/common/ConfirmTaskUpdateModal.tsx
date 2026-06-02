@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, ChevronDown, CheckCircle2 } from 'lucide-react';
+import api from '../../services/api';
 
 export interface ConfirmTaskUpdateModalProps {
   isOpen: boolean;
@@ -7,24 +8,33 @@ export interface ConfirmTaskUpdateModalProps {
   task?: { id: string; name: string; status: string } | null;
 }
 
-import api from '../../services/api';
-
 const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen, onClose, task }) => {
   const [status, setStatus] = React.useState('');
   const [note, setNote] = React.useState('');
+  const [isManager, setIsManager] = React.useState(false);
 
   React.useEffect(() => {
+    const userStr = sessionStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    setIsManager(user?.Role === 'Manager');
+
     if (task) {
-      setStatus(task.status === 'Pending' ? 'In Progress' : task.status === 'In Progress' ? 'Completed' : 'Pending');
+      const isMgr = user?.Role === 'Manager';
+      if (task.status === 'Pending') {
+        setStatus('In Progress');
+      } else if (task.status === 'In Progress') {
+        setStatus(isMgr ? 'Completed' : 'Ready for Review');
+      } else {
+        setStatus('Pending');
+      }
     }
-  }, [task]);
+  }, [task, isOpen]);
 
   const handleConfirm = async () => {
     if (!task) return;
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       const employeeId = userStr ? JSON.parse(userStr).EmployeeID : 1;
-      // Work id string is like "T-882", so we remove "T-"
       const workId = task.id.startsWith('T-') ? task.id.slice(2) : task.id;
       
       await api.put(`/works/${workId}/progress`, {
@@ -78,14 +88,18 @@ const ConfirmTaskUpdateModal: React.FC<ConfirmTaskUpdateModalProps> = ({ isOpen,
                 className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 hover:border-sky-300 rounded-xl appearance-none outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 text-zinc-900 text-base font-semibold font-['Inter'] transition-all shadow-sm cursor-pointer"
               >
                 <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
+                {isManager ? (
+                  <option value="Completed">Completed</option>
+                ) : (
+                  <option value="Ready for Review">Ready for Review</option>
+                )}
                 <option value="Pending">Pending</option>
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
             </div>
           </div>
 
-          {/* Clinical Notes */}
+          {/* Notes */}
           <div className="flex flex-col gap-2">
             <label className="text-zinc-900 text-sm font-bold font-['Inter']">
               Clinical Notes / Updates <span className="text-slate-500 font-medium">(Optional)</span>

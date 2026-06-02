@@ -80,6 +80,7 @@ router.get('/attendance/today/:employeeId', async (req, res) => {
     }
 });
 
+// Retrieve availability details for all employees
 router.get('/', async (req, res) => {
     try {
         const pool = await poolPromise;

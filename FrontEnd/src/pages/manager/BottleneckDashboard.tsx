@@ -350,14 +350,33 @@ const BottleneckDashboard: React.FC = () => {
                   workloadData
                     .filter((staff: any) => staff.Name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((staff: any) => {
+                    const isClockedIn = staff.IsClockedIn === 1;
                     const maxTasks = 10;
                     const capacity = Math.round((staff.ActiveTasks / maxTasks) * 100);
                     const isOverloaded = capacity >= 100;
                     const isBusy = capacity > 70;
-                    const bgColor = isOverloaded ? 'bg-rose-100' : isBusy ? 'bg-amber-100' : 'bg-sky-100';
-                    const textColor = isOverloaded ? 'text-rose-700' : isBusy ? 'text-amber-700' : 'text-sky-700';
-                    const barColor = isOverloaded ? 'bg-rose-600' : isBusy ? 'bg-amber-500' : 'bg-sky-600';
-                    const statusText = isOverloaded ? 'Overloaded' : isBusy ? 'Busy' : 'Optimal';
+                    
+                    let bgColor = 'bg-sky-100';
+                    let textColor = 'text-sky-700';
+                    let barColor = 'bg-sky-600';
+                    let statusText = 'Optimal';
+                    
+                    if (!isClockedIn) {
+                      bgColor = 'bg-slate-100';
+                      textColor = 'text-slate-600';
+                      barColor = 'bg-slate-400';
+                      statusText = 'Offline';
+                    } else if (isOverloaded) {
+                      bgColor = 'bg-rose-100';
+                      textColor = 'text-rose-700';
+                      barColor = 'bg-rose-600';
+                      statusText = 'Overloaded';
+                    } else if (isBusy) {
+                      bgColor = 'bg-amber-100';
+                      textColor = 'text-amber-700';
+                      barColor = 'bg-amber-500';
+                      statusText = 'Busy';
+                    }
 
                     return (
                       <div key={staff.EmployeeID} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-5">
@@ -428,7 +447,11 @@ const BottleneckDashboard: React.FC = () => {
             <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
               <div className="flex flex-col gap-4">
                 {(() => {
-                  const staffTasks = allWorks.filter(w => w.AssigneeName === viewStaffTasks.Name && w.Status !== 'Completed');
+                  const staffTasks = allWorks.filter(w => 
+                    w.Assignees && 
+                    w.Assignees.some((a: any) => a.EmployeeID == viewStaffTasks.EmployeeID) && 
+                    w.Status !== 'Completed'
+                  );
                   if (staffTasks.length === 0) {
                     return <div className="text-center text-slate-500 py-8">No active tasks found for this employee.</div>;
                   }

@@ -19,7 +19,7 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
   // Get logged-in user
   const getUser = () => {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       if (userStr) return JSON.parse(userStr);
     } catch (e) { /* ignore */ }
     return null;
@@ -30,18 +30,31 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
       const user = getUser();
       if (!user) return;
 
-      // Load employees - exclude self from the list
+      // Load employees - exclude self and managers from the list
       api.get('/employees').then(data => {
-        const otherEmployees = data.filter((e: any) => e.EmployeeID !== user.EmployeeID);
+        const otherEmployees = data.filter((e: any) => 
+          e.EmployeeID !== user.EmployeeID &&
+          !e.Role.toLowerCase().includes('manager')
+        );
         setEmployees(otherEmployees);
         if (otherEmployees.length > 0) setSelectedToEmployee(otherEmployees[0].EmployeeID.toString());
       });
 
       // Load only MY tasks (non-completed) that I can hand over
       api.get('/works').then(data => {
-        const mine = data.filter((t: any) =>
-          t.AssigneeName === user.Name && t.Status !== 'Completed'
-        );
+        const mine = (data || [])
+          .filter((t: any) =>
+            Array.isArray(t.Assignees) &&
+            t.Assignees.some((a: any) => a.EmployeeID === user.EmployeeID) &&
+            t.Status !== 'Completed'
+          )
+          .map((t: any) => {
+            const myAssign = t.Assignees.find((a: any) => a.EmployeeID === user.EmployeeID);
+            return {
+              ...t,
+              AssignmentID: myAssign ? myAssign.AssignmentID : null
+            };
+          });
         setMyTasks(mine);
       });
 
@@ -140,7 +153,7 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
               <label className="text-zinc-900 text-sm font-bold font-['Inter']">Your Tasks to Transfer:</label>
               {myTasks.length > 0 && (
                 <button 
-                  onClick={() => setSelectedTasks(myTasks.map(t => t.WorkItemID))}
+                  onClick={() => setSelectedTasks(myTasks.map(t => t.AssignmentID).filter(Boolean))}
                   className="text-sky-700 text-sm font-bold font-['Inter'] hover:underline"
                 >Select All</button>
               )}
@@ -153,8 +166,8 @@ export const InitiateHandoverModal: React.FC<InitiateHandoverModalProps> = ({ is
                   <div className="pt-0.5">
                     <input 
                       type="checkbox" 
-                      checked={selectedTasks.includes(task.WorkItemID)}
-                      onChange={() => toggleTask(task.WorkItemID)}
+                      checked={selectedTasks.includes(task.AssignmentID)}
+                      onChange={() => toggleTask(task.AssignmentID)}
                       className="w-5 h-5 rounded text-sky-700 focus:ring-sky-500 focus:ring-offset-0 border-slate-300 bg-white" 
                     />
                   </div>

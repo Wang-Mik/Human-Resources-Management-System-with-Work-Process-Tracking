@@ -5,6 +5,7 @@ const { sql, poolPromise } = require('../config/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_123';
 
+// Helper to decode the token and see who is logged in
 const getUserFromToken = (req) => {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -22,11 +23,19 @@ const getUserFromToken = (req) => {
  * MODULE: HANDOVER MANAGEMENT
  */
 
-// [Initiate Handover] 
 router.post('/initiate', async (req, res) => {
     try {
         const { fromEmployeeId, toEmployeeId, reason } = req.body;
         const pool = await poolPromise;
+
+        // Check if ToEmployeeID is a manager
+        const managerCheck = await pool.request()
+            .input('EmployeeID', sql.Int, toEmployeeId)
+            .query("SELECT EmployeeID FROM Employee WHERE EmployeeID = @EmployeeID AND Role LIKE '%Manager%'");
+        if (managerCheck.recordset.length > 0) {
+            return res.status(400).json({ error: "Cannot initiate handover to managers." });
+        }
+
         const result = await pool.request()
             .input('FromEmployeeID', sql.Int, fromEmployeeId)
             .input('ToEmployeeID', sql.Int, toEmployeeId)
@@ -82,12 +91,47 @@ router.put('/:id/review', async (req, res) => {
     try {
         const { status } = req.body;
         const pool = await poolPromise;
+        const handoverId = req.params.id;
+
+        if (status === 'Approved') {
+            // 1. Get FromEmployeeID and ToEmployeeID
+            const hoResult = await pool.request()
+                .input('HandOverID', sql.Int, handoverId)
+                .query('SELECT FromEmployeeID, ToEmployeeID FROM HandOverRecord WHERE HandOverID = @HandOverID');
+
+            if (hoResult.recordset.length === 0) {
+                return res.status(404).json({ error: 'Handover record not found' });
+            }
+
+            const { FromEmployeeID, ToEmployeeID } = hoResult.recordset[0];
+
+            // 2. Get all AssignmentIDs in this handover
+            const itemsResult = await pool.request()
+                .input('HandOverID', sql.Int, handoverId)
+                .query('SELECT AssignmentID FROM HandOverItem WHERE HandOverID = @HandOverID');
+
+            const assignmentIds = itemsResult.recordset.map(r => r.AssignmentID);
+
+            // 3. Perform the slot transfer for each assignment
+            for (const assignmentId of assignmentIds) {
+                await pool.request()
+                    .input('AssignmentID', sql.Int, assignmentId)
+                    .input('FromEmployeeID', sql.Int, FromEmployeeID)
+                    .input('ToEmployeeID', sql.Int, ToEmployeeID)
+                    .query(`
+                        UPDATE WorkAssignment 
+                        SET EmployeeID = @ToEmployeeID 
+                        WHERE AssignmentID = @AssignmentID AND EmployeeID = @FromEmployeeID
+                    `);
+            }
+        }
+
         await pool.request()
-            .input('HandOverID', sql.Int, req.params.id)
+            .input('HandOverID', sql.Int, handoverId)
             .input('Status', sql.NVarChar, status)
             .query('UPDATE HandOverRecord SET Status = @Status WHERE HandOverID = @HandOverID');
 
-        res.json({ message: `Handover ${status}` });
+        res.json({ message: `Handover ${status} and assignments transferred if approved` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -97,12 +141,46 @@ router.put('/:id/review', async (req, res) => {
 router.post('/:id/accept', async (req, res) => {
     try {
         const pool = await poolPromise;
+        const handoverId = req.params.id;
+
+        // 1. Get FromEmployeeID and ToEmployeeID
+        const hoResult = await pool.request()
+            .input('HandOverID', sql.Int, handoverId)
+            .query('SELECT FromEmployeeID, ToEmployeeID FROM HandOverRecord WHERE HandOverID = @HandOverID');
+
+        if (hoResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Handover record not found' });
+        }
+
+        const { FromEmployeeID, ToEmployeeID } = hoResult.recordset[0];
+
+        // 2. Get all AssignmentIDs in this handover
+        const itemsResult = await pool.request()
+            .input('HandOverID', sql.Int, handoverId)
+            .query('SELECT AssignmentID FROM HandOverItem WHERE HandOverID = @HandOverID');
+
+        const assignmentIds = itemsResult.recordset.map(r => r.AssignmentID);
+
+        // 3. Perform the slot transfer for each assignment
+        for (const assignmentId of assignmentIds) {
+            await pool.request()
+                .input('AssignmentID', sql.Int, assignmentId)
+                .input('FromEmployeeID', sql.Int, FromEmployeeID)
+                .input('ToEmployeeID', sql.Int, ToEmployeeID)
+                .query(`
+                    UPDATE WorkAssignment 
+                    SET EmployeeID = @ToEmployeeID 
+                    WHERE AssignmentID = @AssignmentID AND EmployeeID = @FromEmployeeID
+                `);
+        }
+
+        // 4. Set Handover status to Approved
         await pool.request()
-            .input('HandOverID', sql.Int, req.params.id)
+            .input('HandOverID', sql.Int, handoverId)
             .input('Status', sql.NVarChar, 'Approved')
             .query('UPDATE HandOverRecord SET Status = @Status WHERE HandOverID = @HandOverID');
 
-        res.json({ message: 'Handover Accepted' });
+        res.json({ message: 'Handover Accepted and assignments transferred' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

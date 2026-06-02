@@ -28,8 +28,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     try {
       const data = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('user', JSON.stringify(data.user));
       const role = data.user.Role.toLowerCase().includes('manager') ? 'manager' : 'employee';
       onLogin(role, data.user);
     } catch (err: any) {
