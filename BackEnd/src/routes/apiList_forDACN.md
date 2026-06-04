@@ -50,3 +50,7 @@
 | /api/availability/attendance | POST | Clock in or clock out |
 | /api/availability/status | POST | Update availability status |
 | /api/availability | GET | Get all employees with their current availability status |
+
+
+## API Documentation for FrontEnd Code
+http://localhost:5000/api-docs/#/

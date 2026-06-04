@@ -10,6 +10,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const setupSwagger = require('./swagger');
+
+setupSwagger(app);
+
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
